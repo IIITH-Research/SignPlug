@@ -14,6 +14,15 @@ import matplotlib.pyplot as plt
 import numpy as np
 
 
+LIGHT_BG = "#f6f7f9"
+PANEL_BG = "#ffffff"
+TEXT = "#111827"
+MUTED = "#4b5563"
+BODY_COLOR = "#111827"
+LEFT_COLOR = "#047857"
+RIGHT_COLOR = "#b91c1c"
+JOINT_COLOR = "#111827"
+
 BODY_CONNECTIONS = [
     (11, 12),
     (11, 13),
@@ -92,101 +101,209 @@ def visualize_3views(landmarks_path, output_path, preview_path=None, title="Appl
     print(f"  Y: [{ymin:.2f}, {ymax:.2f}]")
     print(f"  Z: [{zmin:.2f}, {zmax:.2f}]")
 
-    def draw_frame(frame_idx, ax_front, ax_side, ax_top):
+    def style_2d_axis(ax, view_title, xlabel, ylabel, xlim, ylim):
+        ax.set_facecolor(PANEL_BG)
+        ax.set_title(view_title, fontsize=9, color=TEXT, pad=5, weight="bold")
+        ax.set_xlim(*xlim)
+        ax.set_ylim(*ylim)
+        ax.set_xlabel(xlabel, fontsize=7, color=MUTED, labelpad=1)
+        ax.set_ylabel(ylabel, fontsize=7, color=MUTED, labelpad=1)
+        ax.set_aspect("equal", adjustable="box")
+        ax.grid(False)
+        ax.tick_params(labelsize=6, colors=MUTED, length=2)
+        for spine in ax.spines.values():
+            spine.set_color("#d1d5db")
+            spine.set_linewidth(0.8)
+
+    def draw_points_2d(ax, points, connections, dims, color, joint_size=12, line_width=1.3, alpha=1.0):
+        x_dim, y_dim = dims
+        ax.scatter(
+            points[:, x_dim],
+            points[:, y_dim],
+            c=color,
+            s=joint_size,
+            zorder=5,
+            alpha=alpha,
+            edgecolors="white",
+            linewidths=0.4,
+        )
+        for i, j in connections:
+            ax.plot(
+                [points[i, x_dim], points[j, x_dim]],
+                [points[i, y_dim], points[j, y_dim]],
+                color=color,
+                linewidth=line_width,
+                alpha=alpha,
+                solid_capstyle="round",
+            )
+
+    def style_3d_axis(ax, view_title):
+        ax.set_facecolor(PANEL_BG)
+        ax.set_title(view_title, fontsize=9, color=TEXT, pad=5, weight="bold")
+        ax.set_xlim(xmin, xmax)
+        ax.set_ylim(ymin, ymax)
+        ax.set_zlim(zmin, zmax)
+        ax.set_xlabel("X horizontal (m)", fontsize=7, color=MUTED, labelpad=0)
+        ax.set_ylabel("Y height (m)", fontsize=7, color=MUTED, labelpad=0)
+        ax.set_zlabel("Z depth (m)", fontsize=7, color=MUTED, labelpad=0)
+        ax.tick_params(labelsize=6, colors=MUTED, length=2)
+        ax.view_init(elev=18, azim=-45)
+        ax.set_box_aspect((xmax - xmin, ymax - ymin, zmax - zmin))
+        ax.grid(False)
+        ax.xaxis.pane.fill = False
+        ax.yaxis.pane.fill = False
+        ax.zaxis.pane.fill = False
+        ax.xaxis.pane.set_edgecolor("#d1d5db")
+        ax.yaxis.pane.set_edgecolor("#d1d5db")
+        ax.zaxis.pane.set_edgecolor("#d1d5db")
+
+    def draw_points_3d(ax, points, connections, color, joint_size=12, line_width=1.2, alpha=1.0):
+        ax.scatter(
+            points[:, 0],
+            points[:, 1],
+            points[:, 2],
+            c=color,
+            s=joint_size,
+            zorder=5,
+            depthshade=False,
+            alpha=alpha,
+            edgecolors="white",
+            linewidths=0.4,
+        )
+        for i, j in connections:
+            ax.plot(
+                [points[i, 0], points[j, 0]],
+                [points[i, 1], points[j, 1]],
+                [points[i, 2], points[j, 2]],
+                color=color,
+                linewidth=line_width,
+                alpha=alpha,
+                solid_capstyle="round",
+            )
+
+    def draw_hand_focus(ax, view_title, dims, xlabel, ylabel, body, lhand, rhand, l_ok, r_ok):
+        style_2d_axis(ax, view_title, xlabel, ylabel, (xmin, xmax) if dims[0] == 0 else (zmin, zmax), (ymin, ymax))
+        draw_points_2d(ax, body, BODY_CONNECTIONS, dims, BODY_COLOR, joint_size=8, line_width=0.9, alpha=0.25)
+
+        focus_points = []
+        if l_ok:
+            draw_points_2d(ax, lhand, HAND_CONNECTIONS, dims, LEFT_COLOR, joint_size=14, line_width=1.4)
+            focus_points.append(lhand[:, dims])
+        if r_ok:
+            draw_points_2d(ax, rhand, HAND_CONNECTIONS, dims, RIGHT_COLOR, joint_size=14, line_width=1.4)
+            focus_points.append(rhand[:, dims])
+
+        if focus_points:
+            pts = np.concatenate(focus_points, axis=0)
+            x0, y0 = pts.min(axis=0)
+            x1, y1 = pts.max(axis=0)
+            pad_x = max(0.08, (x1 - x0) * 0.35)
+            pad_y = max(0.08, (y1 - y0) * 0.35)
+            ax.set_xlim(x0 - pad_x, x1 + pad_x)
+            ax.set_ylim(y0 - pad_y, y1 + pad_y)
+        else:
+            ax.text(0.5, 0.5, "No hand detected", ha="center", va="center", transform=ax.transAxes, color=MUTED)
+
+    def draw_frame(frame_idx, axes):
         body = body_flipped[frame_idx]
         lhand = lhand_translated[frame_idx]
         rhand = rhand_translated[frame_idx]
         l_ok = left_flag_seq[frame_idx]
         r_ok = right_flag_seq[frame_idx]
 
-        for ax, elev, azim, view_title in [
-            (ax_front, 10, -90, "Front view"),
-            (ax_side, 10, 0, "Side view"),
-            (ax_top, 90, -90, "Top view"),
-        ]:
+        ax_front, ax_side, ax_top, ax_persp, ax_hands_front, ax_hands_depth = axes
+        for ax in axes:
             ax.cla()
-            ax.set_title(view_title, fontsize=9, pad=2, color="white")
-            ax.set_xlim(xmin, xmax)
-            ax.set_ylim(ymin, ymax)
-            ax.set_zlim(zmin, zmax)
-            ax.set_xlabel("X (m)", fontsize=7, color="gray")
-            ax.set_ylabel("Y (m)", fontsize=7, color="gray")
-            ax.set_zlabel("Z (m)", fontsize=7, color="gray")
-            ax.tick_params(labelsize=6, colors="gray")
-            ax.view_init(elev=elev, azim=azim)
-            ax.set_facecolor("#1a1a1a")
-            ax.xaxis.pane.fill = False
-            ax.yaxis.pane.fill = False
-            ax.zaxis.pane.fill = False
-            ax.xaxis.pane.set_edgecolor("#333333")
-            ax.yaxis.pane.set_edgecolor("#333333")
-            ax.zaxis.pane.set_edgecolor("#333333")
-            ax.grid(True, color="#2a2a2a", linewidth=0.5)
 
-            ax.scatter(body[:, 0], body[:, 1], body[:, 2], c="white", s=18, zorder=5, depthshade=False)
+        style_2d_axis(ax_front, "FRONT camera view: X horizontal, Y height", "X horizontal (m)", "Y height (m)", (xmin, xmax), (ymin, ymax))
+        style_2d_axis(ax_side, "SIDE depth view: Z depth, Y height", "Z depth (m)", "Y height (m)", (zmin, zmax), (ymin, ymax))
+        style_2d_axis(ax_top, "TOP floor view: X horizontal, Z depth", "X horizontal (m)", "Z depth (m)", (xmin, xmax), (zmin, zmax))
+        style_3d_axis(ax_persp, "45 degree 3D view: X/Y/Z together")
 
-            for i, j in BODY_CONNECTIONS:
-                ax.plot(
-                    [body[i, 0], body[j, 0]],
-                    [body[i, 1], body[j, 1]],
-                    [body[i, 2], body[j, 2]],
-                    c="deepskyblue",
-                    linewidth=1.2,
-                )
-
+        for ax, dims in [(ax_front, (0, 1)), (ax_side, (2, 1)), (ax_top, (0, 2))]:
+            draw_points_2d(ax, body, BODY_CONNECTIONS, dims, BODY_COLOR, joint_size=12, line_width=1.5)
             if l_ok:
-                ax.scatter(lhand[:, 0], lhand[:, 1], lhand[:, 2], c="lime", s=14, zorder=5, depthshade=False)
-                for i, j in HAND_CONNECTIONS:
-                    ax.plot(
-                        [lhand[i, 0], lhand[j, 0]],
-                        [lhand[i, 1], lhand[j, 1]],
-                        [lhand[i, 2], lhand[j, 2]],
-                        c="lime",
-                        linewidth=0.9,
-                    )
-
+                draw_points_2d(ax, lhand, HAND_CONNECTIONS, dims, LEFT_COLOR, joint_size=11, line_width=1.2)
             if r_ok:
-                ax.scatter(rhand[:, 0], rhand[:, 1], rhand[:, 2], c="orange", s=14, zorder=5, depthshade=False)
-                for i, j in HAND_CONNECTIONS:
-                    ax.plot(
-                        [rhand[i, 0], rhand[j, 0]],
-                        [rhand[i, 1], rhand[j, 1]],
-                        [rhand[i, 2], rhand[j, 2]],
-                        c="orange",
-                        linewidth=0.9,
-                    )
+                draw_points_2d(ax, rhand, HAND_CONNECTIONS, dims, RIGHT_COLOR, joint_size=11, line_width=1.2)
+
+        draw_points_3d(ax_persp, body, BODY_CONNECTIONS, BODY_COLOR, joint_size=12, line_width=1.3)
+        if l_ok:
+            draw_points_3d(ax_persp, lhand, HAND_CONNECTIONS, LEFT_COLOR, joint_size=11, line_width=1.1)
+        if r_ok:
+            draw_points_3d(ax_persp, rhand, HAND_CONNECTIONS, RIGHT_COLOR, joint_size=11, line_width=1.1)
+
+        draw_hand_focus(
+            ax_hands_front,
+            "HAND close-up front: X/Y overlap check",
+            (0, 1),
+            "X horizontal (m)",
+            "Y height (m)",
+            body,
+            lhand,
+            rhand,
+            l_ok,
+            r_ok,
+        )
+        draw_hand_focus(
+            ax_hands_depth,
+            "HAND close-up depth: Z/Y crossing check",
+            (2, 1),
+            "Z depth (m)",
+            "Y height (m)",
+            body,
+            lhand,
+            rhand,
+            l_ok,
+            r_ok,
+        )
+
+        ax_front.text(0.02, 0.02, "Body", color=BODY_COLOR, transform=ax_front.transAxes, fontsize=7, weight="bold")
+        ax_front.text(0.18, 0.02, "Left hand", color=LEFT_COLOR, transform=ax_front.transAxes, fontsize=7, weight="bold")
+        ax_front.text(0.42, 0.02, "Right hand", color=RIGHT_COLOR, transform=ax_front.transAxes, fontsize=7, weight="bold")
 
     preview_frame = T // 2
 
     if preview_path is not None:
-        fig = plt.figure(figsize=(15, 5), facecolor="#0d0d0d")
+        fig = plt.figure(figsize=(18, 10), facecolor=LIGHT_BG)
         fig.suptitle(
             f"{title} Skeleton - Frame {preview_frame}  "
             f"| R-hand: {'detected' if right_flag_seq[preview_frame] else 'missing'}"
             f"  L-hand: {'detected' if left_flag_seq[preview_frame] else 'missing'}",
-            color="white",
-            fontsize=10,
+            color=TEXT,
+            fontsize=11,
+            weight="bold",
         )
-        ax1 = fig.add_subplot(131, projection="3d")
-        ax2 = fig.add_subplot(132, projection="3d")
-        ax3 = fig.add_subplot(133, projection="3d")
-        draw_frame(preview_frame, ax1, ax2, ax3)
+        axes = [
+            fig.add_subplot(2, 3, 1),
+            fig.add_subplot(2, 3, 2),
+            fig.add_subplot(2, 3, 3),
+            fig.add_subplot(2, 3, 4, projection="3d"),
+            fig.add_subplot(2, 3, 5),
+            fig.add_subplot(2, 3, 6),
+        ]
+        draw_frame(preview_frame, axes)
         plt.tight_layout()
-        plt.savefig(preview_path, dpi=120, bbox_inches="tight", facecolor="#0d0d0d")
+        plt.savefig(preview_path, dpi=120, bbox_inches="tight", facecolor=LIGHT_BG)
         plt.close(fig)
         print(f"Preview saved to {preview_path}")
 
-    fig_anim = plt.figure(figsize=(15, 5), facecolor="#0d0d0d")
-    ax1 = fig_anim.add_subplot(131, projection="3d")
-    ax2 = fig_anim.add_subplot(132, projection="3d")
-    ax3 = fig_anim.add_subplot(133, projection="3d")
-    title_obj = fig_anim.suptitle("", color="white", fontsize=10)
+    fig_anim = plt.figure(figsize=(18, 10), facecolor=LIGHT_BG)
+    axes_anim = [
+        fig_anim.add_subplot(2, 3, 1),
+        fig_anim.add_subplot(2, 3, 2),
+        fig_anim.add_subplot(2, 3, 3),
+        fig_anim.add_subplot(2, 3, 4, projection="3d"),
+        fig_anim.add_subplot(2, 3, 5),
+        fig_anim.add_subplot(2, 3, 6),
+    ]
+    title_obj = fig_anim.suptitle("", color=TEXT, fontsize=11, weight="bold")
 
     def update(frame_idx):
         r_status = "R detected" if right_flag_seq[frame_idx] else "R missing"
         l_status = "L detected" if left_flag_seq[frame_idx] else "L missing"
-        title_obj.set_text(f"{title} - Frame {frame_idx + 1}/{T}  |  {r_status}  {l_status}")
-        draw_frame(frame_idx, ax1, ax2, ax3)
+        title_obj.set_text(f"{title} - Frame {frame_idx}/{T - 1}  |  {r_status}  {l_status}")
+        draw_frame(frame_idx, axes_anim)
         return []
 
     anim = animation.FuncAnimation(
@@ -204,7 +321,7 @@ def visualize_3views(landmarks_path, output_path, preview_path=None, title="Appl
     )
 
     print(f"\nSaving {T} frames to {output_path} ...")
-    anim.save(output_path, writer=writer, dpi=100, savefig_kwargs={"facecolor": "#0d0d0d"})
+    anim.save(output_path, writer=writer, dpi=100, savefig_kwargs={"facecolor": LIGHT_BG})
     print("Saved.")
     plt.close(fig_anim)
     return output_path
