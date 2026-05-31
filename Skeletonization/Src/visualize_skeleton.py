@@ -1,9 +1,11 @@
 import os
+import tempfile
 from pathlib import Path
 
-os.environ["MPLCONFIGDIR"] = "/tmp/matplotlib"
-os.environ["XDG_CACHE_HOME"] = "/tmp"
-Path("/tmp/matplotlib").mkdir(parents=True, exist_ok=True)
+_tmp = Path(tempfile.gettempdir())
+os.environ.setdefault("MPLCONFIGDIR", str(_tmp / "matplotlib"))
+os.environ.setdefault("XDG_CACHE_HOME", str(_tmp))
+Path(os.environ["MPLCONFIGDIR"]).mkdir(parents=True, exist_ok=True)
 
 import matplotlib
 
@@ -56,12 +58,12 @@ def visualize_3views(landmarks_path, output_path, preview_path=None, title="Appl
         preview_path = Path(preview_path)
         preview_path.parent.mkdir(parents=True, exist_ok=True)
 
-    data = np.load(landmarks_path)
-    body_world_seq = data["body_world"]
-    left_hand_seq = data["left_hand"]
-    right_hand_seq = data["right_hand"]
-    left_flag_seq = data["left_flag"]
-    right_flag_seq = data["right_flag"]
+    with np.load(landmarks_path) as data:
+        body_world_seq = data["body_world"]
+        left_hand_seq = data["left_hand"]
+        right_hand_seq = data["right_hand"]
+        left_flag_seq = data["left_flag"]
+        right_flag_seq = data["right_flag"]
 
     T = body_world_seq.shape[0]
     print(f"Loaded {T} frames")
