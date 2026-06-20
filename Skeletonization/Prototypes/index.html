@@ -1,0 +1,643 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <title>ISL 3D Avatar (FK Skeleton)</title>
+    <style>
+        body {
+            margin: 0;
+            overflow: hidden;
+            background-color: #222;
+        }
+
+        #debugUI {
+            position: absolute;
+            bottom: 20px;
+            left: 20px;
+            width: 500px;
+            z-index: 1000;
+            color: white;
+            font-family: Arial;
+        }
+
+        #frameSlider {
+            width: 500px;
+        }
+    </style>
+    
+    <script type="importmap">
+        {
+            "imports": {
+                "three": "https://unpkg.com/three@0.160.0/build/three.module.js",
+                "three/addons/": "https://unpkg.com/three@0.160.0/examples/jsm/"
+            }
+        }
+    </script>
+</head>
+<body>
+    <div id="debugUI">
+    <input
+        type="range"
+        id="frameSlider"
+        min="0"
+        max="100"
+        value="0"
+        step="1"
+    />
+
+        <span id="frameLabel">Frame: 0</span>
+    </div>
+    <script type="module">
+        import * as THREE from 'three';
+        import { OrbitControls } from 'three/addons/controls/OrbitControls.js';
+
+        // ==========================================
+        // 1. SETUP THE SCENE, CAMERA, AND LIGHTS
+        // ==========================================
+        const scene = new THREE.Scene();
+        
+        // Add a grid so we can see the floor
+        const gridHelper = new THREE.GridHelper(200, 50);
+        scene.add(gridHelper);
+
+        const camera = new THREE.PerspectiveCamera(75, window.innerWidth / window.innerHeight, 0.1, 1000);
+        camera.position.set(0, 0,150); // Pull camera back to see the body
+
+        const renderer = new THREE.WebGLRenderer({ antialias: true });
+        renderer.setSize(window.innerWidth, window.innerHeight);
+        document.body.appendChild(renderer.domElement);
+
+        // Allow mouse to spin the camera around the avatar
+        const controls = new OrbitControls(camera, renderer.domElement);
+        controls.target.set(0, 0, 0);
+
+        // Add some basic light
+        const light = new THREE.HemisphereLight(0xffffff, 0x444444, 1);
+        scene.add(light);
+
+        // ==========================================
+        // 2. BUILD THE SKELETON HIERARCHY
+        // ==========================================
+        const boneMaterial = new THREE.MeshBasicMaterial({ color: 0xffaa00, wireframe: true });
+
+        // A. Create the Pivot Groups
+        const bodyRoot = new THREE.Group();
+        const rightShoulder = new THREE.Group();
+        const rightElbow = new THREE.Group();
+        const rightWrist = new THREE.Group(); // Fingers will attach here later!
+        const rightThumbBase = new THREE.Group(); // For thumb base joint
+        const rightIndexBase = new THREE.Group(); // For index base joint
+        const rightMiddleBase = new THREE.Group(); // For middle base joint
+        const rightRingBase = new THREE.Group(); // For ring base joint
+        const rightPinkyBase = new THREE.Group(); // For pinky base joint
+        const rightThumbMcp = new THREE.Group(); // For thumb MCP joint
+        const rightIndexMcp = new THREE.Group(); // For index MCP joint  
+        const rightMiddleMcp = new THREE.Group(); // For middle MC
+        const rightRingMcp = new THREE.Group(); // For ring MCP joint 
+        const rightPinkyMcp = new THREE.Group(); 
+        const rightThumbIp = new THREE.Group(); // For thumb IP join
+        const rightIndexDip = new THREE.Group(); // For index DIP joint 
+        const rightMiddleDip = new THREE.Group(); // For middle DIP joint 
+        const rightRingDip = new THREE.Group(); // For ring dip
+        const rightPinkyDip = new THREE.Group(); // For pinky DIP joint (
+        const rightThumbTip = new THREE.Group(); // For thumb tip (
+        const rightIndexTip = new THREE.Group(); // For index tip (
+        const rightMiddleTip = new THREE.Group(); // For middle tip 
+        const rightRingTip = new THREE.Group(); // For ring tip 
+        const rightPinkyTip = new THREE.Group(); // For pinky tip 
+
+
+        
+        // A. Create the Pivot Groups
+        const leftShoulder = new THREE.Group();
+        const leftElbow = new THREE.Group();
+        const leftWrist = new THREE.Group(); // Fingers will attach here later!
+        const leftThumbBase = new THREE.Group(); // For thumb base joint
+        const leftIndexBase = new THREE.Group(); // For index base joint
+        const leftMiddleBase = new THREE.Group(); // For middle base joint
+        const leftRingBase = new THREE.Group(); // For ring base joint
+        const leftPinkyBase = new THREE.Group(); // For pinky base joint
+        const leftThumbMcp = new THREE.Group(); // For thumb MCP joint
+        const leftIndexMcp = new THREE.Group(); // For index MCP joint  
+        const leftMiddleMcp = new THREE.Group(); // For middle MC
+        const leftRingMcp = new THREE.Group(); // For ring MCP joint 
+        const leftPinkyMcp = new THREE.Group(); 
+        const leftThumbIp = new THREE.Group(); // For thumb IP join
+        const leftIndexDip = new THREE.Group(); // For index DIP joint 
+        const leftMiddleDip = new THREE.Group(); // For middle DIP joint 
+        const leftRingDip = new THREE.Group(); // For ring dip
+        const leftPinkyDip = new THREE.Group(); // For pinky DIP joint (
+        const leftThumbTip = new THREE.Group(); // For thumb tip (
+        const leftIndexTip = new THREE.Group(); // For index tip (
+        const leftMiddleTip = new THREE.Group(); // For middle tip 
+        const leftRingTip = new THREE.Group(); // For ring tip 
+        const leftPinkyTip = new THREE.Group(); // For pinky tip 
+
+        // B. Set the Local Offsets (Rest Pose)
+        // Adjust these numbers based on your actual MediaPipe distances!
+        bodyRoot.position.set(0, 
+        50, 0);                                                                // Lift the hips off the floor
+        rightShoulder.position.set(-15.68755433 , 1.53760463 , 1.90117881);   // Right shoulder is up and to the right of hips
+        rightElbow.position.set(-16.04821086,  13.66998255, 14.54399526);      // Bicep length = 30
+        rightWrist.position.set( 5.56471646, -10.01524329, 12.37205267);
+        rightThumbBase.position.set(3.26068774, -1.43368915, 2.24828161);
+        rightIndexBase.position.set(4.76302169, -8.07117652, 3.4996304);
+        rightMiddleBase.position.set(2.60793469, -8.87522241, 2.89180712)
+        rightRingBase.position.set(0.76243561, -8.51430595, 3.24238626);
+        rightPinkyBase.position.set(-1.43929161, -7.46462476, 3.41907027);
+        rightThumbMcp.position.set( 2.75062397, -1.24430582, 1.63413812);
+        rightIndexMcp.position.set(1.30485743, -2.41698064, 0.87700875);
+        rightMiddleMcp.position.set( 0.75229253, -3.15541672, 1.44990864);
+        rightRingMcp.position.set(-0.25043655, -2.99690329, 1.59063224);
+        rightPinkyMcp.position.set(-0.5210273 , -1.92403402, 0.70500845);
+        rightThumbIp.position.set(2.58087292, -1.71273127, 0.62981998);
+        rightIndexDip.position.set( 0.89035258, -2.07566749, 0.90821469);
+        rightMiddleDip.position.set(-0.24386393, -2.18133815, 2.10125446);
+        rightRingDip.position.set(-0.07397924, -1.72927044, 1.96935339);
+        rightPinkyDip.position.set(-0.48709251, -1.62238553, 1.23815853);
+        rightThumbTip.position.set( 2.02846117, -1.87926292, 0.62489947);
+        rightIndexTip.position.set(0.11665523, -1.21999495, 2.49483306);
+        rightMiddleTip.position.set( 0.58806147, -1.65804848, 2.13521216);
+        rightRingTip.position.set(0.3451895 , -1.51378438, 2.46488601);
+        rightPinkyTip.position.set( 0.06433353, -1.48302428, 1.48366727);
+
+
+        
+        leftShoulder.position.set(15.68755433, -1.53760463,  -1.90117881);   // Right shoulder is up and to the right of hips
+        leftElbow.position.set( 12.44049221,  15.36155045, 15.22727609);      // Bicep length = 30
+        leftWrist.position.set( 1.96913481, -12.4373734,  22.56045491);
+        leftThumbBase.position.set(-3.39728408, -1.85858607, 1.9720559 );
+        leftIndexBase.position.set(-4.69503198, -8.72417912, 3.13641571);
+        leftMiddleBase.position.set(-2.03959774, -9.27342912, 2.60307649)
+        leftRingBase.position.set(0.60265046, -9.04106027, 3.14675989);
+        leftPinkyBase.position.set( 2.0622978 , -7.51332669, 3.39194827);
+        leftThumbMcp.position.set(-1.95396785, -1.54689439, 1.40988203);
+        leftIndexMcp.position.set(-0.71370751, -2.76464187, 0.90177429);
+        leftMiddleMcp.position.set(0.2330442 , -3.73193221, 1.25730499);
+        leftRingMcp.position.set( 0.39113164, -2.88324975, 1.06070014);
+        leftPinkyMcp.position.set(1.32619031, -2.10682489, 0.2965404);
+        leftThumbIp.position.set(-2.67606303, -1.87880769, 1.52193177);
+        leftIndexDip.position.set( -0.52916482, -1.9395005 , 1.05309067);
+        leftMiddleDip.position.set(-0.81593562, -2.06206255, 1.98929678);
+        leftRingDip.position.set(-0.05344115, -2.07243301, 1.71521008);
+        leftPinkyDip.position.set(0.88038743, -1.7884017 , 1.1291266 );
+        leftThumbTip.position.set(-1.90608129, -1.89791452, 1.03636943);
+        leftIndexTip.position.set(-1.15205757, -1.24737844, 2.77555119);
+        leftMiddleTip.position.set(-0.56896424, -1.93777308, 2.2315437);
+        leftRingTip.position.set(-0.14800895, -1.88225694, 1.9215988);
+        leftPinkyTip.position.set( 0.15178062, -1.55721642, 1.52803827);
+
+
+
+
+
+
+
+
+
+        // C. Build the Domino Hierarchy
+        scene.add(bodyRoot);
+        bodyRoot.add(rightShoulder);
+        rightShoulder.add(rightElbow);
+        rightElbow.add(rightWrist);
+        rightWrist.add(rightThumbBase);
+        rightWrist.add(rightIndexBase);
+        rightWrist.add(rightMiddleBase); 
+        rightWrist.add(rightRingBase);
+        rightWrist.add(rightPinkyBase);
+        rightThumbBase.add(rightThumbMcp);
+        rightIndexBase.add(rightIndexMcp);
+        rightMiddleBase.add(rightMiddleMcp);
+        rightRingBase.add(rightRingMcp);
+        rightPinkyBase.add(rightPinkyMcp);
+        rightThumbMcp.add(rightThumbIp);
+        rightIndexMcp.add(rightIndexDip);
+        rightMiddleMcp.add(rightMiddleDip);
+        rightRingMcp.add(rightRingDip);
+        rightPinkyMcp.add(rightPinkyDip);
+        rightThumbIp.add(rightThumbTip);
+        rightIndexDip.add(rightIndexTip);
+        rightMiddleDip.add(rightMiddleTip);
+        rightRingDip.add(rightRingTip);
+        rightPinkyDip.add(rightPinkyTip);
+
+        bodyRoot.add(leftShoulder);
+        leftShoulder.add(leftElbow);
+        leftElbow.add(leftWrist);
+        leftWrist.add(leftThumbBase);
+        leftWrist.add(leftIndexBase);
+        leftWrist.add(leftMiddleBase); 
+        leftWrist.add(leftRingBase);
+        leftWrist.add(leftPinkyBase);
+        leftThumbBase.add(leftThumbMcp);
+        leftIndexBase.add(leftIndexMcp);
+        leftMiddleBase.add(leftMiddleMcp);
+        leftRingBase.add(leftRingMcp);
+        leftPinkyBase.add(leftPinkyMcp);
+        leftThumbMcp.add(leftThumbIp);
+        leftIndexMcp.add(leftIndexDip);
+        leftMiddleMcp.add(leftMiddleDip);
+        leftRingMcp.add(leftRingDip);
+        leftPinkyMcp.add(leftPinkyDip);
+        leftThumbIp.add(leftThumbTip);
+        leftIndexDip.add(leftIndexTip);
+        leftMiddleDip.add(leftMiddleTip);
+        leftRingDip.add(leftRingTip);
+        leftPinkyDip.add(leftPinkyTip);
+
+
+
+        // D. Draw Arm Lines (Replaces the broken cylinders)
+        const armLineMaterial = new THREE.LineBasicMaterial({ color: 0xffaa00 }); // Orange for arms
+
+        function drawArmLine(parentGroup, childGroup) {
+            const points = [];
+            points.push(new THREE.Vector3(0, 0, 0)); 
+            points.push(childGroup.position);        
+            const geo = new THREE.BufferGeometry().setFromPoints(points);
+            parentGroup.add(new THREE.Line(geo, armLineMaterial));
+        }
+
+        // Connect Right Arm
+        drawArmLine(bodyRoot, rightShoulder); // Collarbone
+        drawArmLine(rightShoulder, rightElbow); // Bicep
+        drawArmLine(rightElbow, rightWrist);    // Forearm
+
+        // Connect Left Arm
+        drawArmLine(bodyRoot, leftShoulder);  // Collarbone
+        drawArmLine(leftShoulder, leftElbow); // Bicep
+        drawArmLine(leftElbow, leftWrist);    // Forearm
+
+        const lineMaterial = new THREE.LineBasicMaterial({ color: 0x00ffcc }); // Default Cyan
+        const debugThumbMat = new THREE.LineBasicMaterial({ color: 0xff00ff }); // Hot Pink for Debugging!
+        const debugIndexMat = new THREE.LineBasicMaterial({color:  0xffff00 }); // Yellow for Debugging!})
+
+        // Add 'customMat' as an optional parameter
+        function drawBoneLine(parentGroup, childGroup, customMat = lineMaterial) {
+            const points = [];
+            points.push(new THREE.Vector3(0, 0, 0)); // Point A
+            points.push(childGroup.position);        // Point B
+            
+            const geo = new THREE.BufferGeometry().setFromPoints(points);
+            // It uses the custom material if provided, otherwise defaults to cyan
+            parentGroup.add(new THREE.Line(geo, customMat));
+        }
+
+        // Map the Palm lines
+        drawBoneLine(rightWrist, rightThumbBase, debugThumbMat); // Debugging the thumb with a different color
+        drawBoneLine(rightWrist, rightIndexBase,debugIndexMat); // Debugging the index with a different color
+        drawBoneLine(rightWrist, rightMiddleBase);
+        drawBoneLine(rightWrist, rightRingBase);
+        drawBoneLine(rightWrist, rightPinkyBase);
+
+        // Map Finger segments sequentially
+        drawBoneLine(rightThumbBase, rightThumbMcp,debugThumbMat); // Debugging the thumb with a different color
+        drawBoneLine(rightThumbMcp, rightThumbIp,debugThumbMat);
+        drawBoneLine(rightThumbIp, rightThumbTip,debugThumbMat);
+
+        drawBoneLine(rightIndexBase, rightIndexMcp,debugIndexMat); // Debugging the index with a different color
+        drawBoneLine(rightIndexMcp, rightIndexDip,debugIndexMat);
+        drawBoneLine(rightIndexDip, rightIndexTip,debugIndexMat);
+
+        drawBoneLine(rightMiddleBase, rightMiddleMcp);
+        drawBoneLine(rightMiddleMcp, rightMiddleDip);
+        drawBoneLine(rightMiddleDip, rightMiddleTip);
+
+        drawBoneLine(rightRingBase, rightRingMcp);
+        drawBoneLine(rightRingMcp, rightRingDip);
+        drawBoneLine(rightRingDip, rightRingTip);
+
+        drawBoneLine(rightPinkyBase, rightPinkyMcp);
+        drawBoneLine(rightPinkyMcp, rightPinkyDip);
+        drawBoneLine(rightPinkyDip, rightPinkyTip);
+
+        // Map the LEFT Palm lines
+        drawBoneLine(leftWrist, leftThumbBase);
+        drawBoneLine(leftWrist, leftIndexBase);
+        drawBoneLine(leftWrist, leftMiddleBase);
+        drawBoneLine(leftWrist, leftRingBase);
+        drawBoneLine(leftWrist, leftPinkyBase);
+
+        // Map LEFT Finger segments sequentially
+        drawBoneLine(leftThumbBase, leftThumbMcp);
+        drawBoneLine(leftThumbMcp, leftThumbIp);
+        drawBoneLine(leftThumbIp, leftThumbTip);
+
+        drawBoneLine(leftIndexBase, leftIndexMcp);
+        drawBoneLine(leftIndexMcp, leftIndexDip);
+        drawBoneLine(leftIndexDip, leftIndexTip);
+
+        drawBoneLine(leftMiddleBase, leftMiddleMcp);
+        drawBoneLine(leftMiddleMcp, leftMiddleDip);
+        drawBoneLine(leftMiddleDip, leftMiddleTip);
+
+        drawBoneLine(leftRingBase, leftRingMcp);
+        drawBoneLine(leftRingMcp, leftRingDip);
+        drawBoneLine(leftRingDip, leftRingTip);
+
+        drawBoneLine(leftPinkyBase, leftPinkyMcp);
+        drawBoneLine(leftPinkyMcp, leftPinkyDip);
+        drawBoneLine(leftPinkyDip, leftPinkyTip);
+
+
+        // ==========================================
+        // 3. LOAD THE JSON ANIMATION DATA
+        // ==========================================
+        let animationData = null;
+        let currentFrame = 0;
+        let redAnimationData = null; // ADD THIS!
+        let isPlayingRed = false;    // ADD THIS! This is our toggle switch.
+        let debugMode = true;
+
+
+        // Make sure the filename matches what you exported from Python!
+        fetch('./apple_updated_2_animation_data.json')
+            .then(response => response.json())
+            .then(data => {
+                animationData = data;
+                console.log("Animation Loaded Successfully!", data);
+                slider.max =
+                data["rightForeArmLocalRotations"].length - 1;
+            })
+            .catch(err => console.error("Error loading JSON. Is your Live Server running?", err));
+        fetch('./red_updated_2_animation_data.json')
+            .then(response => response.json())
+            .then(data => {
+                redAnimationData = data;
+                console.log("Red Animation Loaded Successfully!", data);
+            })
+            .catch(err => console.error("Error loading JSON. Is your Live Server running?", err));
+
+        // ==========================================
+        // 3. LOAD THE JSON ANIMATION DATA
+        // ==========================================
+        const slider = document.getElementById("frameSlider");
+        const label = document.getElementById("frameLabel");
+
+        slider.addEventListener("input", () => {
+            currentFrame = parseInt(slider.value);
+            label.textContent = `Frame: ${currentFrame}`;
+        });
+      // ==========================================
+        // 4. THE ANIMATION PLAYBACK LOOP
+        // ==========================================
+        function animate() {
+            requestAnimationFrame(animate);
+            
+            // Only play if BOTH files have successfully loaded from the hard drive
+            if (animationData && redAnimationData) {
+
+                // 1. Check our toggle switch: Which dictionary are we reading from right now?
+                const activeData = isPlayingRed ? redAnimationData : animationData;
+                // 🌟 ADD THIS LINE TO UPDATE SLIDER LENGTH 🌟
+                slider.max = activeData["rightForeArmLocalRotations"].length - 1;
+
+                // 2. INJECT ROTATIONS (Using activeData instead of hardcoding the name!)
+                
+                // --- RIGHT ARM ---
+                if (activeData["globalRotaionUpperRightArm"]) { 
+                    const q = activeData["globalRotaionUpperRightArm"][currentFrame];
+                    rightShoulder.quaternion.set(q[0], q[1], q[2], q[3]);
+                }
+                if (activeData["rightForeArmLocalRotations"]) {
+                    const q = activeData["rightForeArmLocalRotations"][currentFrame];
+                    rightElbow.quaternion.set(q[0], q[1], q[2], q[3]);
+                }   
+
+                // --- RIGHT THUMB ---
+                if (activeData["rightThumbMcpLocalRotations"]) {
+                    const q = activeData["rightThumbMcpLocalRotations"][currentFrame];
+                    rightThumbBase.quaternion.set(q[0], q[1], q[2], q[3]);
+                }
+                if (activeData["rightThumbIpLocalRotations"]) {
+                    const q = activeData["rightThumbIpLocalRotations"][currentFrame];
+                    rightThumbMcp.quaternion.set(q[0], q[1], q[2], q[3]);
+                }
+                if (activeData["rightThumbTipLocalRotations"]) {
+                    const q = activeData["rightThumbTipLocalRotations"][currentFrame];
+                    rightThumbIp.quaternion.set(q[0], q[1], q[2], q[3]);
+                }
+
+                // --- RIGHT INDEX ---
+                if (activeData["rightIndexBaseLocalRotations"]) {
+                    const q = activeData["rightIndexBaseLocalRotations"][currentFrame];
+                    rightWrist.quaternion.set(q[0], q[1], q[2], q[3]);
+                }
+                if (activeData["rightIndexMcpLocalRotations"]) {
+                    const q = activeData["rightIndexMcpLocalRotations"][currentFrame];
+                    rightIndexBase.quaternion.set(q[0], q[1], q[2], q[3]);
+                }
+                if (activeData["rightIndexDipLocalRotations"]) {
+                    const q = activeData["rightIndexDipLocalRotations"][currentFrame];
+                    rightIndexMcp.quaternion.set(q[0], q[1], q[2], q[3]);
+                }
+                if (activeData["rightIndexTipLocalRotations"]) {
+                    const q = activeData["rightIndexTipLocalRotations"][currentFrame];
+                    rightIndexDip.quaternion.set(q[0], q[1], q[2], q[3]);
+                }
+
+                // --- RIGHT MIDDLE ---
+                if (activeData["rightMiddleMcpLocalRotations"]) {
+                    const q = activeData["rightMiddleMcpLocalRotations"][currentFrame];
+                    rightMiddleBase.quaternion.set(q[0], q[1], q[2], q[3]);
+                }
+                if (activeData["rightMiddleDipLocalRotations"]) {
+                    const q = activeData["rightMiddleDipLocalRotations"][currentFrame];
+                    rightMiddleMcp.quaternion.set(q[0], q[1], q[2], q[3]);
+                }
+                if (activeData["rightMiddleTipLocalRotations"]) {
+                    const q = activeData["rightMiddleTipLocalRotations"][currentFrame];
+                    rightMiddleDip.quaternion.set(q[0], q[1], q[2], q[3]);
+                }
+
+                // --- RIGHT RING ---
+                if (activeData["rightRingMcpLocalRotations"]) {
+                    const q = activeData["rightRingMcpLocalRotations"][currentFrame];
+                    rightRingBase.quaternion.set(q[0], q[1], q[2], q[3]);
+                }
+                if (activeData["rightRingDipLocalRotations"]) {
+                    const q = activeData["rightRingDipLocalRotations"][currentFrame];
+                    rightRingMcp.quaternion.set(q[0], q[1], q[2], q[3]);
+                }
+                if (activeData["rightRingTipLocalRotations"]) {
+                    const q = activeData["rightRingTipLocalRotations"][currentFrame];
+                    rightRingDip.quaternion.set(q[0], q[1], q[2], q[3]);
+                }
+
+                // --- RIGHT PINKY ---
+                if (activeData["rightPinkyMcpLocalRotations"]) {
+                    const q = activeData["rightPinkyMcpLocalRotations"][currentFrame];
+                    rightPinkyBase.quaternion.set(q[0], q[1], q[2], q[3]);
+                }
+                if (activeData["rightPinkyDipLocalRotations"]) {
+                    const q = activeData["rightPinkyDipLocalRotations"][currentFrame];
+                    rightPinkyMcp.quaternion.set(q[0], q[1], q[2], q[3]);
+                }
+                if (activeData["rightPinkyTipLocalRotations"]) {
+                    const q = activeData["rightPinkyTipLocalRotations"][currentFrame];
+                    rightPinkyDip.quaternion.set(q[0], q[1], q[2], q[3]);
+                }
+
+                // --- LEFT ARM ---
+                if (activeData["globalRotaionUpperLeftArm"]) { 
+                    const q = activeData["globalRotaionUpperLeftArm"][currentFrame];
+                    leftShoulder.quaternion.set(q[0], q[1], q[2], q[3]);
+                }
+                if (activeData["leftForeArmLocalRotations"]) {
+                    const q = activeData["leftForeArmLocalRotations"][currentFrame];
+                    leftElbow.quaternion.set(q[0], q[1], q[2], q[3]);
+                }
+
+                // --- LEFT THUMB ---
+                if (activeData["leftThumbMcpLocalRotations"]) {
+                    const q = activeData["leftThumbMcpLocalRotations"][currentFrame];
+                    leftThumbBase.quaternion.set(q[0], q[1], q[2], q[3]);
+                }
+                if (activeData["leftThumbIpLocalRotations"]) {
+                    const q = activeData["leftThumbIpLocalRotations"][currentFrame];
+                    leftThumbMcp.quaternion.set(q[0], q[1], q[2], q[3]);
+                }
+                if (activeData["leftThumbTipLocalRotations"]) {
+                    const q = activeData["leftThumbTipLocalRotations"][currentFrame];
+                    leftThumbIp.quaternion.set(q[0], q[1], q[2], q[3]);
+                }
+
+                // --- LEFT INDEX ---
+                if (activeData["leftIndexBaseLocalRotations"]) {
+                    const q = activeData["leftIndexBaseLocalRotations"][currentFrame];
+                    leftWrist.quaternion.set(q[0], q[1], q[2], q[3]);
+                }
+                if (activeData["leftIndexMcpLocalRotations"]) {
+                    const q = activeData["leftIndexMcpLocalRotations"][currentFrame];
+                    leftIndexBase.quaternion.set(q[0], q[1], q[2], q[3]);
+                }
+                if (activeData["leftIndexDipLocalRotations"]) {
+                    const q = activeData["leftIndexDipLocalRotations"][currentFrame];
+                    leftIndexMcp.quaternion.set(q[0], q[1], q[2], q[3]);
+                }
+                if (activeData["leftIndexTipLocalRotations"]) {
+                    const q = activeData["leftIndexTipLocalRotations"][currentFrame];
+                    leftIndexDip.quaternion.set(q[0], q[1], q[2], q[3]);
+                }
+
+                // --- LEFT MIDDLE ---
+                if (activeData["leftMiddleMcpLocalRotations"]) {
+                    const q = activeData["leftMiddleMcpLocalRotations"][currentFrame];
+                    leftMiddleBase.quaternion.set(q[0], q[1], q[2], q[3]);
+                }
+                if (activeData["leftMiddleDipLocalRotations"]) {
+                    const q = activeData["leftMiddleDipLocalRotations"][currentFrame];
+                    leftMiddleMcp.quaternion.set(q[0], q[1], q[2], q[3]);
+                }
+                if (activeData["leftMiddleTipLocalRotations"]) {
+                    const q = activeData["leftMiddleTipLocalRotations"][currentFrame];
+                    leftMiddleDip.quaternion.set(q[0], q[1], q[2], q[3]);
+                }
+
+                // --- LEFT RING ---
+                if (activeData["leftRingMcpLocalRotations"]) {
+                    const q = activeData["leftRingMcpLocalRotations"][currentFrame];
+                    leftRingBase.quaternion.set(q[0], q[1], q[2], q[3]);
+                }
+                if (activeData["leftRingDipLocalRotations"]) {
+                    const q = activeData["leftRingDipLocalRotations"][currentFrame];
+                    leftRingMcp.quaternion.set(q[0], q[1], q[2], q[3]);
+                }
+                if (activeData["leftRingTipLocalRotations"]) {
+                    const q = activeData["leftRingTipLocalRotations"][currentFrame];
+                    leftRingDip.quaternion.set(q[0], q[1], q[2], q[3]);
+                }
+
+                // --- LEFT PINKY ---
+                if (activeData["leftPinkyMcpLocalRotations"]) {
+                    const q = activeData["leftPinkyMcpLocalRotations"][currentFrame];
+                    leftPinkyBase.quaternion.set(q[0], q[1], q[2], q[3]);
+                }
+                if (activeData["leftPinkyDipLocalRotations"]) {
+                    const q = activeData["leftPinkyDipLocalRotations"][currentFrame];
+                    leftPinkyMcp.quaternion.set(q[0], q[1], q[2], q[3]);
+                }
+                if (activeData["leftPinkyTipLocalRotations"]) {
+                    const q = activeData["leftPinkyTipLocalRotations"][currentFrame];
+                    leftPinkyDip.quaternion.set(q[0], q[1], q[2], q[3]);
+                }
+
+                // 3. ADVANCE THE SEQUENCE
+                if (!debugMode) {
+                    currentFrame++;
+                }
+                
+                // If we reach the end of the current animation sequence...
+                if (currentFrame >= activeData["rightForeArmLocalRotations"].length) {
+                    currentFrame = 0;              // Reset to frame 0
+                    isPlayingRed = !isPlayingRed;  // Flip the switch! (Apple -> Red -> Apple...)
+                }
+            }
+
+            controls.update();
+            renderer.render(scene, camera);
+        }
+
+        // Start the engine
+        animate();
+        // ==========================================
+        // 5. THE VIDEO RECORDING STUDIO (MediaRecorder)
+        // ==========================================
+        let mediaRecorder;
+        let recordedChunks = [];
+
+        function setupRecording() {
+            // 1. Capture the video stream from the Three.js canvas at 60 FPS
+            const stream = renderer.domElement.captureStream(60);
+            
+            // 2. Setup the recorder to output a webm video
+            mediaRecorder = new MediaRecorder(stream, { mimeType: 'video/webm' });
+
+            // 3. Every time a chunk of video is ready, save it
+            mediaRecorder.ondataavailable = function(e) {
+                if (e.data.size > 0) {
+                    recordedChunks.push(e.data);
+                }
+            };
+
+            // 4. When we hit 'Stop', stitch the chunks together and download!
+            mediaRecorder.onstop = function() {
+                const blob = new Blob(recordedChunks, { type: 'video/webm' });
+                const url = URL.createObjectURL(blob);
+                
+                // Create an invisible download link and click it automatically
+                const a = document.createElement('a');
+                a.style.display = 'none';
+                a.href = url;
+                a.download = 'isl_avatar_animation.webm';
+                document.body.appendChild(a);
+                a.click();
+                
+                // Cleanup
+                window.URL.revokeObjectURL(url);
+                recordedChunks = [];
+                console.log("✅ Video downloaded successfully!");
+            };
+        }
+
+        // Initialize the studio
+        setupRecording();
+
+        // Listen for Keyboard Commands
+        window.addEventListener('keydown', (event) => {
+            if (event.key.toLowerCase() === 'r') {
+                if (mediaRecorder.state === 'inactive') {
+                    mediaRecorder.start();
+                    console.log("🔴 RECORDING STARTED... (Press 'S' to stop)");
+                }
+            } else if (event.key.toLowerCase() === 's') {
+                if (mediaRecorder.state === 'recording') {
+                    mediaRecorder.stop();
+                    console.log("⏹️ RECORDING STOPPED. Downloading video...");
+                }
+            }
+        });
+
+    </script>
+</body>
+</html>
