@@ -28,3 +28,16 @@ build/
 
 # Logs
 *.log
+
+# Server video bridge (cached archive listing, partial downloads)
+src/intepolation_code/remote_index.json
+*.part
+.setup_done
+
+# Internal, shared privately (the repo is public): server addresses and the prioritized sheet
+src/intepolation_code/servers.json
+src/intepolation_code/annotation_queue.csv
+
+# Rebuilt from the shared machine on every sync
+src/intepolation_code/annotated_raw.txt
+src/intepolation_code/annotated_remote_meta.txt

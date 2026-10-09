@@ -1,0 +1,8 @@
+{
+    "nas_host": "USER@NAS_IP",
+    "nas_archive": "/path/on/nas/to/ISL_Dictionary.tar",
+    "shared_host": "USER@SHARED_MACHINE_IP",
+    "shared_raw_dir": "path/from/home/to/sign_annotation/raw",
+    "shared_vid_dir": "path/from/home/to/vid",
+    "shared_meta_dir": "path/from/home/to/metadata"
+}

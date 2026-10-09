@@ -1,10 +1,13 @@
 import os
 import sys
 import json
+import threading
 import cv2
 import tkinter as tk
-from tkinter import ttk, messagebox
+from tkinter import ttk, messagebox, simpledialog
 from PIL import Image, ImageTk
+
+import server_videos
 
 class TimelineVisualizer(tk.Canvas):
     def __init__(self, parent, **kwargs):
@@ -75,7 +78,254 @@ class TimelineVisualizer(tk.Canvas):
         self.create_line(x_curr, 2, x_curr, h - 2, fill="#ffffff", width=2)
 
 
-class VideoAnnotatorApp(tk.Tk):
+QUEUE_PREFETCH = 2  # videos downloaded ahead when moving to the next queue item
+
+
+class UiQueueMixin:
+    """Lets worker threads queue callbacks that run on the Tk thread (Tk isn't thread-safe)."""
+
+    def init_ui_queue(self):
+        self.ui_calls = []
+        self.ui_lock = threading.Lock()
+        self.poll_ui_calls()
+
+    def post(self, fn, *args):
+        with self.ui_lock:
+            self.ui_calls.append((fn, args))
+
+    def poll_ui_calls(self):
+        if not self.winfo_exists():
+            return
+        with self.ui_lock:
+            calls, self.ui_calls = self.ui_calls, []
+        for fn, args in calls:
+            fn(*args)
+        self.after(50, self.poll_ui_calls)
+
+
+class ServerBrowser(UiQueueMixin, tk.Toplevel):
+    """Browse ISL_Dictionary.tar on the NAS in sheet (web_rank) order and download into dataset/."""
+
+    def __init__(self, app):
+        super().__init__(app)
+        self.app = app
+        self.title(f"Server: {os.path.basename(server_videos.ARCHIVE)} @ {server_videos.HOST}")
+        self.geometry("720x560")
+        self.configure(bg="#121212")
+
+        self.videos = []
+        self.shown = []
+        self.busy = False
+        self.want_next = False  # "Next in Queue" was clicked before the index finished loading
+        self.pending_only = tk.BooleanVar(value=False)
+
+        top = tk.Frame(self, bg="#121212", padx=10, pady=10)
+        top.pack(fill="x")
+        ttk.Label(top, text="Search:").pack(side="left", padx=(0, 8))
+        self.query = tk.StringVar()
+        self.query.trace_add("write", lambda *_: self.refresh_list())
+        entry = tk.Entry(top, textvariable=self.query, bg="#1f1f1f", fg="#e0e0e0",
+                         insertbackground="#e0e0e0", relief="flat", font=('Segoe UI', 10))
+        entry.pack(side="left", fill="x", expand=True, ipady=3)
+        entry.focus_set()
+        tk.Checkbutton(
+            top, text="Pending only", variable=self.pending_only, command=self.refresh_list,
+            bg="#121212", fg="#e0e0e0", selectcolor="#1f1f1f", activebackground="#121212",
+            activeforeground="#e0e0e0", font=('Segoe UI', 9)
+        ).pack(side="left", padx=(8, 0))
+        ttk.Button(top, text="🔄 Refresh Index", command=lambda: self.load_index(refresh=True)).pack(side="left", padx=(8, 0))
+
+        list_frame = tk.Frame(self, bg="#121212", padx=10)
+        list_frame.pack(fill="both", expand=True)
+        scroll = ttk.Scrollbar(list_frame, orient="vertical")
+        self.listbox = tk.Listbox(
+            list_frame, selectmode="extended", yscrollcommand=scroll.set,
+            bg="#181818", fg="#e0e0e0", selectbackground="#00adb5", selectforeground="#121212",
+            highlightthickness=0, bd=0, font=('Consolas', 10), activestyle="none"
+        )
+        scroll.config(command=self.listbox.yview)
+        scroll.pack(side="right", fill="y")
+        self.listbox.pack(side="left", fill="both", expand=True)
+        self.listbox.bind("<Double-Button-1>", lambda e: self.download_selected(open_first=True))
+
+        bottom = tk.Frame(self, bg="#121212", padx=10, pady=10)
+        bottom.pack(fill="x")
+        self.status = ttk.Label(bottom, text="", style="Accent.TLabel")
+        self.status.pack(anchor="w")
+        self.progress = ttk.Progressbar(bottom, mode="determinate", maximum=100)
+        self.progress.pack(fill="x", pady=6)
+        btns = tk.Frame(bottom, bg="#121212")
+        btns.pack(fill="x")
+        tk.Button(
+            btns, text="⬇ Download && Open", command=lambda: self.download_selected(open_first=True),
+            bg="#00adb5", fg="#121212", activebackground="#00f0f8", relief="flat",
+            font=('Segoe UI', 10, 'bold'), pady=6
+        ).pack(side="left", fill="x", expand=True, padx=(0, 5))
+        tk.Button(
+            btns, text="⬇ Download Only", command=lambda: self.download_selected(open_first=False),
+            bg="#1f1f1f", fg="#e0e0e0", activebackground="#2a2a2a", relief="flat",
+            font=('Segoe UI', 10, 'bold'), pady=6
+        ).pack(side="left", fill="x", expand=True, padx=(5, 0))
+
+        self.init_ui_queue()
+        self.load_index()
+
+    def run_in_background(self, work):
+        if self.busy:
+            self.set_status("Busy: wait for the current server task to finish.")
+            return
+        self.busy = True
+
+        def runner():
+            auth_error = None
+            try:
+                work()
+            except server_videos.AuthRequired as e:
+                auth_error = str(e)
+            except Exception as e:
+                msg = str(e) or type(e).__name__
+                self.post(setattr, self, "want_next", False)
+                self.post(self.set_status, f"Error: {msg.splitlines()[0]}")
+                self.post(lambda: messagebox.showerror("Server Error", msg, parent=self))
+            finally:
+                self.post(setattr, self, "busy", False)
+                if auth_error:  # queued after busy is cleared, so the retry can start
+                    self.post(self.ask_password_and_retry, auth_error, work)
+
+        threading.Thread(target=runner, daemon=True).start()
+
+    def ask_password_and_retry(self, reason, work):
+        self.set_status(reason)
+        password = simpledialog.askstring(
+            "NAS password", f"{reason}\n\nPassword for {server_videos.HOST} (kept in memory for this session only):",
+            show="•", parent=self)
+        if not password:
+            self.want_next = False
+            self.set_status("Cancelled: the NAS needs its password.")
+            return
+        server_videos.set_password(password)
+        self.run_in_background(work)
+
+    # ---- UI ----
+    def set_status(self, text, pct=None):
+        self.status.config(text=text)
+        if pct is not None:
+            self.progress["value"] = pct
+
+    def all_rows(self):
+        """Sheet rows in rank order; plain archive listing if there is no sheet."""
+        if self.app.queue:
+            return self.app.queue
+        return [{"rank": None, "word": "", "priority": "", "name": v["name"], "entry": v} for v in self.videos]
+
+    def refresh_list(self):
+        if not self.winfo_exists():
+            return
+        q = server_videos.norm_name(self.query.get())
+        local = self.app.local_videos()
+        done, skip = self.app.done, self.app.skip
+        rows = [r for r in self.all_rows()
+                if not q or q in server_videos.norm_name(r["word"]) + "|" + server_videos.norm_name(r["name"])]
+        # Stack order: what still has to be annotated first (sheet order), finished ones at the end
+        available = lambda r: r["entry"] or r["name"] in local or not self.videos
+        todo = [r for r in rows if r["name"] not in skip and available(r)]
+        finished = [r for r in rows if r["name"] in skip]
+        unavailable = [r for r in rows if r["name"] not in skip and not available(r)]
+        self.shown = todo if self.pending_only.get() else todo + finished + unavailable
+
+        def mark(r):
+            if r["name"] in done:
+                return "●"
+            if r["name"] in skip:
+                return "≈"
+            if r["name"] in local:
+                return "✓"
+            if r["entry"]:
+                return "·"
+            return "✗" if self.videos else "?"
+
+        lines = [
+            f"{mark(r)} {'#' + str(r['rank']) if r['rank'] else '':<7}{r['priority']:<4}{r['word'][:24]:<26}{r['name']}"
+            for r in self.shown
+        ]
+        self.listbox.delete(0, tk.END)
+        if lines:
+            self.listbox.insert(tk.END, *lines)
+        self.set_status(f"{len(todo)} to annotate · {len(finished)} done   "
+                        "● annotated  ≈ same sign done  ✓ downloaded  · on server  ✗ not on server")
+
+    def load_index(self, refresh=False):
+        self.set_status("Listing archive on server..." if refresh or not os.path.exists(server_videos.INDEX_PATH)
+                        else "Loading cached index...", 0)
+
+        def work():
+            if refresh:
+                try:
+                    server_videos.sync_annotated()
+                except Exception as e:
+                    print(f"Could not sync annotated list from {server_videos.ANNOTATED_HOST}: {e}")
+            videos = server_videos.load_index(refresh=refresh)
+            queue = server_videos.load_queue(videos)
+            self.post(self.on_index_loaded, videos, queue)
+
+        self.run_in_background(work)
+
+    def on_index_loaded(self, videos, queue):
+        self.videos = videos
+        self.app.set_queue(queue)
+        self.app.populate_videos()
+        self.refresh_list()
+        if self.want_next:
+            self.want_next = False
+            self.after(0, self.open_next_pending)  # after busy is cleared
+
+    def open_next_pending(self):
+        """Opens the next unannotated sheet row after the current video and prefetches the ones after it."""
+        if not self.videos:
+            self.want_next = True  # index still loading; resumes in on_index_loaded
+            return
+        if not self.app.queue:
+            self.set_status(f"No sheet found at {server_videos.QUEUE_PATH}")
+            return
+        todo = server_videos.pending(self.app.queue, self.app.skip)
+        if not todo:
+            self.set_status("Nothing pending: every sheet row on the server is annotated.")
+            return
+        cur = self.app.queue_row(self.app.active_video)
+        after = [r for r in todo if cur and r["rank"] > cur["rank"]]
+        self.fetch_rows((after or todo)[:1 + QUEUE_PREFETCH], open_first=True)
+
+    def download_selected(self, open_first):
+        self.fetch_rows([self.shown[i] for i in self.listbox.curselection()], open_first)
+
+    def fetch_rows(self, rows, open_first):
+        local = self.app.local_videos()
+        rows = [r for r in rows if r["entry"] or r["name"] in local]
+        if not rows:
+            self.set_status("Selected video(s) are not in the server archive.")
+            return
+        dest_dir = self.app.videos_dir
+
+        def work():
+            for n, row in enumerate(rows, 1):
+                label = f"[{n}/{len(rows)}] {row['name']}"
+
+                def report(done, total, label=label):
+                    pct = 100 * done / total if total else 100
+                    self.post(self.set_status, f"{label}: {done / 1e6:.1f}/{total / 1e6:.1f} MB", pct)
+
+                if row["entry"]:
+                    self.post(self.set_status, f"{label}: starting...", 0)
+                    server_videos.fetch(row["entry"], dest_dir, progress=report)
+                if n == 1 and open_first:
+                    self.post(self.app.open_downloaded_video, row["name"])
+            self.post(self.refresh_list)
+            self.post(self.set_status, f"Downloaded {len(rows)} video(s) to dataset/", 100)
+
+        self.run_in_background(work)
+
+
+class VideoAnnotatorApp(UiQueueMixin, tk.Tk):
     def __init__(self):
         super().__init__()
         self.title("ISL Video Frame Interpolation Annotator")
@@ -99,9 +349,18 @@ class VideoAnnotatorApp(tk.Tk):
         self.interpolate_start = None
         self.interpolate_end = None
         self.keyframes = []
-        
+
+        # Annotation order from the prioritized sheet (cached server index only, no network here)
+        self.active_video = None
+        self.combo_rows = []  # queue rows parallel to the dropdown entries after the placeholder
+        self.server_browser = None
+        self.set_queue(server_videos.load_queue(server_videos.load_index(cached_only=True)))
+
         self.init_style()
+        os.makedirs(self.videos_dir, exist_ok=True)
         self.init_ui()
+        self.init_ui_queue()
+        self.sync_shared_annotations()
         
         # Handle periodic timer updates
         self.timer_id = None
@@ -149,6 +408,12 @@ class VideoAnnotatorApp(tk.Tk):
         self.video_combo = ttk.Combobox(selector_frame, state="readonly", width=40, postcommand=self.populate_videos)
         self.video_combo.pack(side="left", fill="x", expand=True)
         self.video_combo.bind("<<ComboboxSelected>>", self.on_video_selected)
+
+        self.btn_next_queue = ttk.Button(selector_frame, text="⏭ Next in Queue", command=self.next_in_queue)
+        self.btn_next_queue.pack(side="left", padx=(10, 0))
+
+        self.btn_server = ttk.Button(selector_frame, text="☁ Fetch from Server", command=self.open_server_browser)
+        self.btn_server.pack(side="left", padx=(10, 0))
 
         # Video container label (drawn black)
         self.video_container = tk.Label(left_frame, bg="#080808", bd=1, relief="solid")
@@ -204,6 +469,12 @@ class VideoAnnotatorApp(tk.Tk):
         
         self.lbl_active_video = ttk.Label(info_grp, text="Video: None")
         self.lbl_active_video.pack(anchor="w", pady=2)
+        self.lbl_sheet = ttk.Label(info_grp, text="Sheet: N/A")
+        self.lbl_sheet.pack(anchor="w", pady=2)
+        self.lbl_upload = ttk.Label(info_grp, text="Upload: -")
+        self.lbl_upload.pack(anchor="w", pady=2)
+        self.lbl_sync = ttk.Label(info_grp, text="Shared: -")
+        self.lbl_sync.pack(anchor="w", pady=2)
         self.lbl_start = ttk.Label(info_grp, text="Interpolate Start: N/A")
         self.lbl_start.pack(anchor="w", pady=2)
         self.lbl_end = ttk.Label(info_grp, text="Interpolate End: N/A")
@@ -268,16 +539,27 @@ class VideoAnnotatorApp(tk.Tk):
             messagebox.showwarning("Warning", f"Videos folder does not exist at {self.videos_dir}")
             return
             
-        videos = [f for f in os.listdir(self.videos_dir) if f.lower().endswith(('.mp4', '.avi', '.mov', '.mkv'))]
-        videos.sort()
-        
-        current_selection = self.video_combo.get()
-        combo_values = ["Select a video..."] + videos
-        self.video_combo.config(values=combo_values)
-        
-        if current_selection in combo_values:
-            idx = combo_values.index(current_selection)
-            self.video_combo.current(idx)
+        local = self.local_videos()
+        if self.queue:
+            # Only sheet videos, as a stack: still-to-annotate first in sheet (web_rank) order,
+            # annotated ones moved to the end. Rows that aren't downloaded yet are fetched on select.
+            fetchable = [q for q in self.queue if (q["name"] in local or q["entry"]) and q["name"] not in self.dups]
+            rows = ([q for q in fetchable if q["name"] not in self.done]
+                    + [q for q in fetchable if q["name"] in self.done])
+        else:
+            rows = [{"rank": None, "word": "", "name": f, "entry": None}
+                    for f in sorted(local, key=str.lower) if f.lower().endswith(('.mp4', '.avi', '.mov', '.mkv'))]
+        self.combo_rows = rows
+
+        labels = []
+        for r in rows:
+            mark = "● " if r["name"] in self.done else ("" if r["name"] in local else "⬇ ")
+            labels.append(f"{mark}#{r['rank']}  {r['word']}  ({r['name']})" if r["rank"] else f"{mark}{r['name']}")
+        self.video_combo.config(values=["Select a video..."] + labels)
+
+        names = [r["name"] for r in rows]
+        if self.active_video in names:
+            self.video_combo.current(names.index(self.active_video) + 1)
         else:
             self.video_combo.current(0)
 
@@ -285,9 +567,57 @@ class VideoAnnotatorApp(tk.Tk):
         index = self.video_combo.current()
         if index <= 0:
             return
-        video_filename = self.video_combo.get()
-        video_path = os.path.join(self.videos_dir, video_filename)
-        self.load_video(video_path)
+        row = self.combo_rows[index - 1]
+        if row["name"] in self.local_videos():
+            self.load_video(os.path.join(self.videos_dir, row["name"]))
+        else:
+            self.open_server_browser().fetch_rows([row], open_first=True)
+
+    def local_videos(self):
+        return set(os.listdir(self.videos_dir)) if os.path.isdir(self.videos_dir) else set()
+
+    def set_queue(self, queue):
+        self.queue = queue
+        self.queue_by_name = {q["name"]: q for q in queue}
+        self.refresh_done()
+
+    def refresh_done(self):
+        """Sheet videos already annotated: saved here, or the same sign in sign_annotation/raw."""
+        self.done = server_videos.done_names(self.queue, self.metadata_dir)
+        # Same sign as something already annotated (Sign_N variant / listed synonym): not shown in the queue
+        self.dups = server_videos.duplicate_names(self.queue, self.done, self.metadata_dir)
+        self.skip = self.done | set(self.dups)
+
+    def queue_row(self, filename):
+        return self.queue_by_name.get(filename)
+
+    def update_sheet_label(self):
+        row = self.queue_row(self.active_video)
+        if not row:
+            self.lbl_sheet.config(text="Sheet: not in sheet")
+            return
+        if row["name"] in self.done:
+            status = "● annotated"
+        elif row["name"] in self.dups:
+            status = f"≈ same sign as {self.dups[row['name']]}"
+        else:
+            status = "to annotate"
+        self.lbl_sheet.config(text=f"Sheet: #{row['rank']} {row['word']} ({row['priority']}) · {status}")
+
+    def open_server_browser(self):
+        if self.server_browser and self.server_browser.winfo_exists():
+            self.server_browser.lift()
+        else:
+            self.server_browser = ServerBrowser(self)
+        return self.server_browser
+
+    def next_in_queue(self):
+        self.open_server_browser().open_next_pending()
+
+    def open_downloaded_video(self, filename):
+        self.active_video = filename
+        self.populate_videos()
+        self.load_video(os.path.join(self.videos_dir, filename))
 
     def load_video(self, video_path):
         if self.cap:
@@ -317,7 +647,9 @@ class VideoAnnotatorApp(tk.Tk):
         self.keyframes = []
         
         video_filename = os.path.basename(video_path)
+        self.active_video = video_filename
         self.lbl_active_video.config(text=f"Video: {video_filename}")
+        self.update_sheet_label()
 
         # Check for existing metadata file to load
         meta_filename = f"{video_filename}_meta-data.json"
@@ -542,8 +874,8 @@ class VideoAnnotatorApp(tk.Tk):
             messagebox.showwarning("Save Error", "Please select and load a video first.")
             return
 
-        video_filename = self.video_combo.get()
-        
+        video_filename = self.active_video
+
         # Create output dictionary matching requested schema
         metadata = {
             "video_name": video_filename,
@@ -551,6 +883,10 @@ class VideoAnnotatorApp(tk.Tk):
             "interpolate_end": self.interpolate_end,
             "keyframes": self.keyframes
         }
+        row = self.queue_row(video_filename)
+        if row:
+            metadata["base_word"] = row["word"]
+            metadata["web_rank"] = row["rank"]
 
         # Filename format: video_name_meta-data.json
         output_filename = f"{video_filename}_meta-data.json"
@@ -559,12 +895,64 @@ class VideoAnnotatorApp(tk.Tk):
         try:
             with open(output_filepath, "w") as f:
                 json.dump(metadata, f, indent=4)
-            
-            messagebox.showinfo(
-                "Success", f"Metadata saved successfully to:\n{output_filename}"
-            )
+
+            self.refresh_done()
+            self.populate_videos()
+            self.update_sheet_label()
+            if self.server_browser and self.server_browser.winfo_exists():
+                self.server_browser.refresh_list()
         except Exception as e:
             messagebox.showerror("Save Error", f"Could not save metadata file:\n{str(e)}")
+            return
+
+        self.upload_annotation(os.path.join(self.videos_dir, video_filename), output_filepath)
+        messagebox.showinfo(
+            "Success", f"Metadata saved successfully to:\n{output_filename}\n\n"
+                       f"Uploading video + metadata to {server_videos.ANNOTATED_HOST} "
+                       f"(see 'Upload' in Active File Info)."
+        )
+
+    def sync_shared_annotations(self):
+        """Re-reads what's annotated on the shared machine (incl. colleagues' saves) in the background."""
+        self.lbl_sync.config(text=f"Shared: syncing with {server_videos.ANNOTATED_HOST}...")
+
+        def work():
+            try:
+                raw, meta = server_videos.sync_annotated()
+                self.post(self.lbl_sync.config, {"text": f"Shared: ✓ synced ({len(meta)} annotated on server)"})
+                self.post(self.on_shared_synced)
+            except Exception as e:
+                msg = (str(e) or type(e).__name__).splitlines()[0]
+                self.post(self.lbl_sync.config, {"text": f"Shared: ✗ offline, using last sync ({msg[:40]})"})
+
+        threading.Thread(target=work, daemon=True).start()
+
+    def on_shared_synced(self):
+        self.refresh_done()
+        self.populate_videos()
+        self.update_sheet_label()
+        if self.server_browser and self.server_browser.winfo_exists():
+            self.server_browser.refresh_list()
+
+    def upload_annotation(self, video_path, meta_path):
+        """Copies the saved annotation (video + metadata) to the shared annotation machine."""
+        name = os.path.basename(video_path)
+        self.lbl_upload.config(text=f"Upload: {name} → shared machine...")
+
+        def work():
+            try:
+                video_sent = server_videos.upload_annotation(video_path, meta_path)
+                what = "video + metadata" if video_sent else "metadata (video already there)"
+                self.post(self.lbl_upload.config, {"text": f"Upload: ✓ {name}: {what}"})
+            except Exception as e:
+                msg = (str(e) or type(e).__name__).splitlines()[0]
+                self.post(self.lbl_upload.config, {"text": f"Upload: ✗ {name} failed, saved locally only"})
+                self.post(lambda: messagebox.showerror(
+                    "Upload Error",
+                    f"Saved locally, but the upload to {server_videos.ANNOTATED_HOST} failed:\n{msg}\n\n"
+                    "Run `python server_videos.py push` later to upload it."))
+
+        threading.Thread(target=work, daemon=True).start()
 
 
 if __name__ == "__main__":
