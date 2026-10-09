@@ -4,6 +4,9 @@ This repo contains the **core pipeline** for an ISL avatar system:
 
 Video → MediaPipe keypoints → JSON animation clip → Browser renderer
 
+> **Annotating keyframes?** See the annotator app guide:
+> [skinning/src/intepolation_code/README.md](skinning/src/intepolation_code/README.md)
+
 ## 1) Install dependencies
 
 If you already ran `pip install mediapipe opencv-python numpy`, you can skip this.
