@@ -48,7 +48,7 @@ For each video you mark:
    - downloads the list of already-annotated videos
    - checks the NAS. If your key isn't authorized there yet, it prints a request for the NAS
      admin; send it to them. (You can also print it again any time with
-     `.venv\Scripts\python server_videos.py key`.)
+     `.\.venv\Scripts\python server_videos.py key`.)
 
    Then the app opens. From now on, `start.bat` just opens the app. Downloads work once the admin
    has added your key.
@@ -142,7 +142,7 @@ A saved annotation looks like this:
 | "Python 3 was not found" | Install Python from python.org with *Add python.exe to PATH* ticked, then run `start.bat` again. |
 | App asks for the NAS password and you don't have it | Click **Cancel**: the app copies a key request to the clipboard. Send it to the NAS admin. Once they add the key, downloads won't ask again. |
 | Password box keeps coming back | The NAS password was wrong; type it again. |
-| **Upload: ✗** | Your save is safe on your computer. When the network is back, open a terminal in the app folder and run `.venv\Scripts\python server_videos.py push`. Add `--dry-run` first to see what it will send. |
+| **Upload: ✗** | Your save is safe on your computer. When the network is back, open a terminal in the app folder and run `.\.venv\Scripts\python server_videos.py push`. Add `--dry-run` first to see what it will send. |
 | **Shared: ✗ offline** | The shared machine couldn't be reached (not on the IIIT network?). The app uses the last sync; restart once you're connected. |
 | A video says ✗ (not in archive) | That sheet row has no video on the NAS. Skip it. |
 | Setup failed half-way | Fix the error it printed, delete `.setup_done` if it exists, and run `start.bat` again. |
@@ -152,7 +152,8 @@ the shared machine and in `meta-data\`.
 
 ## Command line (optional)
 
-Run these from the app folder with `.venv\Scripts\python server_videos.py <command>`:
+Run these from the app folder with `.\.venv\Scripts\python server_videos.py <command>` (works in
+PowerShell and cmd; if you use your own Python environment, just `python server_videos.py <command>`):
 
 | Command | What it does |
 |---|---|
