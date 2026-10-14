@@ -15,9 +15,12 @@ For each video you mark:
 - Windows, with **Python 3** from [python.org](https://www.python.org/downloads/). Tick
   *"Add python.exe to PATH"* during install.
 - The **IIIT network** (on campus or VPN). The servers can't be reached from outside.
-- Two passwords, from Sharif:
-  - the **NAS** password (videos are downloaded from there)
-  - the **shared annotation machine** password (needed once, during setup)
+- Access to the two servers:
+  - the **shared annotation machine** password, from Sharif (needed once, during setup)
+  - **NAS** access (videos are downloaded from there). You don't need the NAS password: setup
+    prints a request with your computer's SSH key; send it to the NAS admin, and once they add
+    the key, downloads never ask for a password. (If you do have the NAS password, the app asks
+    for it once per session instead.)
 - Two private files, also from Sharif. They are deliberately not in git because this repository
   is public:
   - `servers.json`: the server addresses and folders
@@ -43,9 +46,12 @@ For each video you mark:
    - asks for the **shared machine password once** and sets up key login for this computer, so
      uploads never ask again
    - downloads the list of already-annotated videos
-   - asks for the **NAS password** to check that the video archive is reachable
+   - checks the NAS. If your key isn't authorized there yet, it prints a request for the NAS
+     admin; send it to them. (You can also print it again any time with
+     `.venv\Scripts\python server_videos.py key`.)
 
-   Then the app opens. From now on, `start.bat` just opens the app.
+   Then the app opens. From now on, `start.bat` just opens the app. Downloads work once the admin
+   has added your key.
 
 ## Daily routine
 
@@ -134,6 +140,7 @@ A saved annotation looks like this:
 |---|---|
 | `start.bat` says servers.json / annotation_queue.csv are missing | Copy both files into the app folder (Getting started, step 2). |
 | "Python 3 was not found" | Install Python from python.org with *Add python.exe to PATH* ticked, then run `start.bat` again. |
+| App asks for the NAS password and you don't have it | Click **Cancel**: the app copies a key request to the clipboard. Send it to the NAS admin. Once they add the key, downloads won't ask again. |
 | Password box keeps coming back | The NAS password was wrong; type it again. |
 | **Upload: ✗** | Your save is safe on your computer. When the network is back, open a terminal in the app folder and run `.venv\Scripts\python server_videos.py push`. Add `--dry-run` first to see what it will send. |
 | **Shared: ✗ offline** | The shared machine couldn't be reached (not on the IIIT network?). The app uses the last sync; restart once you're connected. |
@@ -158,6 +165,8 @@ Run these from the app folder with `.venv\Scripts\python server_videos.py <comma
 | `annotated --sync` | Re-sync the annotated set and list matches, variants and skipped synonyms |
 | `index --refresh` | Re-list the NAS archive (cached in `remote_index.json`) |
 | `check` | Test the NAS connection |
+| `key` | Print the request for the NAS admin (your computer's SSH key) |
+| `authorize-nas` | Authorize this computer's key on the NAS; whoever has the NAS password types it once |
 | `setup` | Run the first-time setup again |
 
 ## For developers
@@ -167,8 +176,9 @@ Run these from the app folder with `.venv\Scripts\python server_videos.py <comma
   same-sign matching.
 - Server settings come from `servers.json` (template: `servers.example.json`). Environment
   variables override it; see the top of `server_videos.py`.
-- The NAS uses password login. The password is asked once per session, kept in memory, and
-  passed to `ssh` through an `SSH_ASKPASS` helper, never written to disk.
+- The NAS tries key login first (the admin adds the annotator's key, see `key` /
+  `authorize-nas`), then password login. The password is asked once per session, kept in
+  memory, and passed to `ssh` through an `SSH_ASKPASS` helper, never written to disk.
 - `annotated_raw.txt` and `annotated_remote_meta.txt` are caches rebuilt on every sync.
 
 ### Keyframe correction and interpolation pipeline
