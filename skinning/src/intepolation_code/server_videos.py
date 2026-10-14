@@ -614,7 +614,7 @@ def nas_key_request():
     return (f"Please give this computer key access to the NAS ({HOST}) by adding this line to that\n"
             f"account's ~/.ssh/authorized_keys:\n\n{pub}\n\n"
             f"Or, sitting at this computer, run this in the app folder and type the NAS password once:\n"
-            f"    .venv\\Scripts\\python server_videos.py authorize-nas")
+            f"    .\\.venv\\Scripts\\python server_videos.py authorize-nas")
 
 
 def _setup():
