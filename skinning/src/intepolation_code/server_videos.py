@@ -601,18 +601,26 @@ def _key_login_works(host):
 def authorize_key(host):
     """Adds this computer's key to host's authorized_keys; ssh asks for host's password once."""
     pub = ensure_key()
+    # Exit 3: logged in, but the account has no writable home (e.g. /nonexistent) to keep authorized_keys in
     proc = subprocess.run(["ssh", *SSH_OPTS, host,
+                           "[ -d ~ ] && [ -w ~ ] || exit 3; "
                            "mkdir -p ~/.ssh && chmod 700 ~/.ssh && cat >> ~/.ssh/authorized_keys && "
                            "chmod 600 ~/.ssh/authorized_keys"], input=(pub + "\n").encode())
+    if proc.returncode == 3:
+        raise ServerError(f"The password worked, but {host} has no home directory, so it can't hold SSH keys. "
+                          f"The server admin has to give the account a home directory first; until then, "
+                          f"use the password.")
+    if proc.returncode == 255:
+        raise ServerError(f"Could not log in to {host} (wrong password?)")
     if proc.returncode != 0:
-        raise ServerError(f"Could not authorize the key on {host} (wrong password?)")
+        raise ServerError(f"Could not authorize the key on {host} (see the messages above)")
 
 
 def nas_key_request():
     """Message for the NAS admin: authorizing this computer's key means nobody here needs the NAS password."""
     pub = ensure_key()
     return (f"Please give this computer key access to the NAS ({HOST}) by adding this line to that\n"
-            f"account's ~/.ssh/authorized_keys:\n\n{pub}\n\n"
+            f"account's ~/.ssh/authorized_keys (the account needs a home directory for that):\n\n{pub}\n\n"
             f"Or, sitting at this computer, run this in the app folder and type the NAS password once:\n"
             f"    .\\.venv\\Scripts\\python server_videos.py authorize-nas")
 
