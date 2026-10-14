@@ -17,10 +17,10 @@ For each video you mark:
 - The **IIIT network** (on campus or VPN). The servers can't be reached from outside.
 - Access to the two servers:
   - the **shared annotation machine** password, from Sharif (needed once, during setup)
-  - **NAS** access (videos are downloaded from there). You don't need the NAS password: setup
-    prints a request with your computer's SSH key; send it to the NAS admin, and once they add
-    the key, downloads never ask for a password. (If you do have the NAS password, the app asks
-    for it once per session instead.)
+  - the **NAS** (`sl_cvit`) password, from Sharif (videos are downloaded from there; the app
+    asks for it once per session). Without it, setup prints a request with your computer's SSH
+    key for the NAS admin. Key login needs the admin to give the `sl_cvit` account a home
+    directory first, since it currently has none.
 - Two private files, also from Sharif. They are deliberately not in git because this repository
   is public:
   - `servers.json`: the server addresses and folders
@@ -46,12 +46,12 @@ For each video you mark:
    - asks for the **shared machine password once** and sets up key login for this computer, so
      uploads never ask again
    - downloads the list of already-annotated videos
-   - checks the NAS. If your key isn't authorized there yet, it prints a request for the NAS
-     admin; send it to them. (You can also print it again any time with
+   - checks the NAS. Without a key there, it prints a request for the NAS admin; you can ignore
+     it if you have the NAS password. (Print it again any time with
      `.\.venv\Scripts\python server_videos.py key`.)
 
-   Then the app opens. From now on, `start.bat` just opens the app. Downloads work once the admin
-   has added your key.
+   Then the app opens. From now on, `start.bat` just opens the app. The first download each
+   session asks for the NAS password.
 
 ## Daily routine
 
@@ -140,7 +140,8 @@ A saved annotation looks like this:
 |---|---|
 | `start.bat` says servers.json / annotation_queue.csv are missing | Copy both files into the app folder (Getting started, step 2). |
 | "Python 3 was not found" | Install Python from python.org with *Add python.exe to PATH* ticked, then run `start.bat` again. |
-| App asks for the NAS password and you don't have it | Click **Cancel**: the app copies a key request to the clipboard. Send it to the NAS admin. Once they add the key, downloads won't ask again. |
+| App asks for the NAS password and you don't have it | Ask Sharif for the `sl_cvit` password. Or click **Cancel**: the app copies a key request to the clipboard for the NAS admin, who must also give `sl_cvit` a home directory. |
+| `authorize-nas` says the account has no home directory | The password was right, but `sl_cvit` can't hold SSH keys yet. Keep using the password, or ask the admin to give the account a home directory. |
 | Password box keeps coming back | The NAS password was wrong; type it again. |
 | **Upload: ✗** | Your save is safe on your computer. When the network is back, open a terminal in the app folder and run `.\.venv\Scripts\python server_videos.py push`. Add `--dry-run` first to see what it will send. |
 | **Shared: ✗ offline** | The shared machine couldn't be reached (not on the IIIT network?). The app uses the last sync; restart once you're connected. |
@@ -167,7 +168,7 @@ PowerShell and cmd; if you use your own Python environment, just `python server_
 | `index --refresh` | Re-list the NAS archive (cached in `remote_index.json`) |
 | `check` | Test the NAS connection |
 | `key` | Print the request for the NAS admin (your computer's SSH key) |
-| `authorize-nas` | Authorize this computer's key on the NAS; whoever has the NAS password types it once |
+| `authorize-nas` | Authorize this computer's key on the NAS; whoever has the NAS password types it once (needs a home directory on the account) |
 | `setup` | Run the first-time setup again |
 
 ## For developers
