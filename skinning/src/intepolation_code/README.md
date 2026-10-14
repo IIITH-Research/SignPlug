@@ -149,6 +149,7 @@ Run these from the app folder with `.venv\Scripts\python server_videos.py <comma
 
 | Command | What it does |
 |---|---|
+| `progress` | How much is done: sheet coverage, your recent saves and whether they uploaded, anything skipped over, what's next |
 | `queue` | Progress, plus the next videos to annotate |
 | `fetch --next 20` | Download the next 20 videos ahead of time |
 | `fetch --ranks 1-100` | Download sheet rows by rank |

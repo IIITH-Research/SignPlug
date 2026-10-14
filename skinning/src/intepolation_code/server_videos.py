@@ -28,6 +28,7 @@ CLI (run from intepolation_code/):
     python server_videos.py index [--refresh]
     python server_videos.py annotated [--sync]    # sheet rows already in the shared annotated set
     python server_videos.py push [--force]        # upload saved annotations to the shared machine
+    python server_videos.py progress              # how much is done, today's saves + uploads, next up
     python server_videos.py queue                 # progress + next pending rows
     python server_videos.py search apple
     python server_videos.py fetch --next 20       # next 20 unannotated rows, sheet order
@@ -95,6 +96,9 @@ META_SUFFIX = "_meta-data.json"
 
 VIDEO_EXTS = (".mp4", ".avi", ".mov", ".mkv", ".webm")
 CHUNK = 1 << 16
+# A new annotator's computer doesn't know the servers' host keys yet, and BatchMode/askpass can't
+# answer the "continue connecting?" prompt: trust a host on first contact, still reject a changed key.
+SSH_OPTS = ["-o", "ConnectTimeout=10", "-o", "StrictHostKeyChecking=accept-new"]
 
 
 class ServerError(RuntimeError):
@@ -152,7 +156,7 @@ def _require(host):
 
 def _ssh_cmd(remote_cmd, host=HOST):
     _require(host)
-    cmd = ["ssh", "-o", "ConnectTimeout=10"]
+    cmd = ["ssh", *SSH_OPTS]
     if _uses_password(host):
         # Key first (if it gets authorized later, the password stops being needed), then password once
         cmd += ["-o", "BatchMode=no", "-o", "NumberOfPasswordPrompts=1",
@@ -340,7 +344,7 @@ def _scp(local_path, remote_dir, host=ANNOTATED_HOST):
     # Run from the file's folder with a relative name, so a Windows drive letter isn't read as a host
     folder, name = os.path.split(os.path.abspath(local_path))
     proc = subprocess.run(
-        ["scp", "-q", "-o", "BatchMode=yes", "-o", "ConnectTimeout=10", "./" + name, f"{host}:{remote_dir}/"],
+        ["scp", "-q", "-o", "BatchMode=yes", *SSH_OPTS, "./" + name, f"{host}:{remote_dir}/"],
         cwd=folder, capture_output=True, stdin=subprocess.DEVNULL, timeout=900)
     if proc.returncode != 0:
         err = proc.stderr.decode(errors="replace").strip()
@@ -532,6 +536,47 @@ def _push(args):
         print(f"  {name}: uploaded")
 
 
+def _progress(args):
+    """Sheet coverage, today's saves (and whether they reached the shared machine), what's next."""
+    import time
+    sync_annotated()
+    queue = load_queue(load_index(cached_only=True))
+    done = done_names(queue)
+    dups = duplicate_names(queue, done)
+    skip = done | set(dups)
+    by_name = {q["name"]: q for q in queue}
+    n_done = sum(q["name"] in done for q in queue)
+    n_dup = sum(q["name"] in dups for q in queue)
+    covered = n_done + n_dup
+
+    since = time.time() - args.hours * 3600
+    saves = sorted((os.path.getmtime(os.path.join(META_DIR, f)), f[:-len(META_SUFFIX)])
+                   for f in os.listdir(META_DIR) if f.endswith(META_SUFFIX)
+                   and os.path.getmtime(os.path.join(META_DIR, f)) > since)
+    remote = set(_remote_ls(UPLOAD_META_DIR))
+    print(f"Saved on this computer in the last {args.hours}h: {len(saves)}")
+    for t, name in saves[-args.n:]:
+        row = by_name.get(name)
+        rank = f"#{row['rank']}" if row else "-"
+        state = "uploaded" if name + META_SUFFIX in remote else "NOT uploaded"
+        print(f"  {time.strftime('%H:%M', time.localtime(t))}  {rank:<7} {name:<40} {state}")
+    missing = [name for _, name in saves if name + META_SUFFIX not in remote]
+    if missing:
+        print(f"Not on the shared machine: {', '.join(missing)} (run `push`)")
+
+    print(f"\nSheet: {n_done} annotated + {n_dup} same-sign skipped = {covered}/{len(queue)} "
+          f"({100 * covered / len(queue):.2f}%), {len(queue) - covered} left")
+    ranks = [by_name[name]["rank"] for _, name in saves if name in by_name]
+    if ranks:
+        top = max(ranks)
+        behind = [q for q in queue if q["rank"] < top and q["name"] not in skip and q["entry"]]
+        print(f"Highest rank done: #{top}")
+        if behind:
+            print("Open behind it: " + ", ".join(f"#{q['rank']} {q['word']}" for q in behind))
+        ahead = [q for q in queue if q["rank"] > top and q["name"] not in skip and q["entry"]][:3]
+        print("Next up: " + ", ".join(f"#{q['rank']} {q['word']}" for q in ahead))
+
+
 def _setup():
     """One-time setup on a new annotator machine: SSH key login to the shared annotation machine
     (uploads + shared annotated list), then the shared lists and the NAS check."""
@@ -544,7 +589,7 @@ def _setup():
         if subprocess.run(["ssh-keygen", "-q", "-t", "ed25519", "-N", "", "-f", key]).returncode != 0:
             raise ServerError("ssh-keygen failed (is OpenSSH installed?)")
 
-    ok = subprocess.run(["ssh", "-o", "BatchMode=yes", "-o", "ConnectTimeout=10", ANNOTATED_HOST, "true"],
+    ok = subprocess.run(["ssh", "-o", "BatchMode=yes", *SSH_OPTS, ANNOTATED_HOST, "true"],
                         capture_output=True, stdin=subprocess.DEVNULL).returncode == 0
     if ok:
         print(f"{ANNOTATED_HOST}: key login already works.")
@@ -552,7 +597,7 @@ def _setup():
         print(f"Authorizing this computer on {ANNOTATED_HOST}: enter its password once.")
         with open(key + ".pub", "rb") as f:
             pub = f.read()
-        proc = subprocess.run(["ssh", "-o", "ConnectTimeout=10", ANNOTATED_HOST,
+        proc = subprocess.run(["ssh", *SSH_OPTS, ANNOTATED_HOST,
                                "mkdir -p ~/.ssh && chmod 700 ~/.ssh && cat >> ~/.ssh/authorized_keys && "
                                "chmod 600 ~/.ssh/authorized_keys"], input=pub)
         if proc.returncode != 0:
@@ -594,6 +639,9 @@ def main():
     p_push.add_argument("--force", action="store_true", help="Re-upload metadata even if it's already there")
     p_push.add_argument("--all", action="store_true", help="Include saved videos that aren't in the sheet")
     p_push.add_argument("--dry-run", action="store_true", help="Only list what would be uploaded")
+    p_prog = sub.add_parser("progress", help="How much is done: sheet coverage, recent saves, uploads, next up")
+    p_prog.add_argument("--hours", type=int, default=24, help="Show saves from the last N hours (default 24)")
+    p_prog.add_argument("-n", type=int, default=15, help="How many recent saves to list")
     p_queue = sub.add_parser("queue", help="Annotation progress and next pending rows (sheet order)")
     p_queue.add_argument("-n", type=int, default=15, help="How many pending rows to show")
     p_search = sub.add_parser("search", help="Find videos whose word or filename contains QUERY")
@@ -639,6 +687,9 @@ def _run_command(args, parser):
 
     if args.cmd == "push":
         _push(args)
+        return
+    if args.cmd == "progress":
+        _progress(args)
         return
 
     # annotated/queue only need the sheet, so they work without the NAS (cached index if any)
