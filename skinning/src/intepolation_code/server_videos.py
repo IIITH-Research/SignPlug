@@ -118,6 +118,10 @@ _ASKPASS_VAR = "SL_CVIT_ASKPASS_PW"
 
 def set_password(password):
     global _password
+    # Pasted passwords pick up stray whitespace, and Ctrl+V at a Windows console prompt inserts a
+    # literal control character instead of pasting: neither can be part of the real password
+    if password:
+        password = "".join(c for c in password if c.isprintable()).strip()
     _password = password or None
 
 
