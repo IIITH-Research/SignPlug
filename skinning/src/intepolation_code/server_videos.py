@@ -7,8 +7,8 @@ it in, or get the file from the team):
   - the shared annotation machine: holds the already-annotated set (raw folders + metadata)
     and receives every saved annotation (video + metadata).
 
-Uses the system `ssh`/`scp`. For the NAS an SSH key is tried first, then its password: asked
-once per session (CLI prompt / app dialog) or taken from SL_CVIT_PASSWORD. It is kept in
+Uses the system `ssh`/`scp`. For the NAS an SSH key is tried first (the admin authorizes it, see
+`key`), then its password: asked once per session (CLI prompt / app dialog) or taken from SL_CVIT_PASSWORD. It is kept in
 memory only and handed to ssh through a small SSH_ASKPASS helper, never written to disk.
 The shared machine uses key login, set up once with `python server_videos.py setup`.
 
@@ -25,6 +25,8 @@ Cold_(for_food).mp4). Sign_N variants and synonyms in same_sign_aliases.csv are 
 CLI (run from intepolation_code/):
     python server_videos.py setup                 # once, on a new annotator's computer
     python server_videos.py check
+    python server_videos.py key                   # request for the NAS admin: authorize this computer's key
+    python server_videos.py authorize-nas         # same, done here by whoever has the NAS password
     python server_videos.py index [--refresh]
     python server_videos.py annotated [--sync]    # sheet rows already in the shared annotated set
     python server_videos.py push [--force]        # upload saved annotations to the shared machine
@@ -577,37 +579,67 @@ def _progress(args):
         print("Next up: " + ", ".join(f"#{q['rank']} {q['word']}" for q in ahead))
 
 
+KEY_PATH = os.path.join(os.path.expanduser("~"), ".ssh", "id_ed25519")
+
+
+def ensure_key():
+    """This computer's SSH public key (one line), creating the key pair if there isn't one."""
+    if not os.path.exists(KEY_PATH + ".pub"):
+        os.makedirs(os.path.dirname(KEY_PATH), exist_ok=True)
+        print("Creating an SSH key for this computer...")
+        if subprocess.run(["ssh-keygen", "-q", "-t", "ed25519", "-N", "", "-f", KEY_PATH]).returncode != 0:
+            raise ServerError("ssh-keygen failed (is OpenSSH installed?)")
+    with open(KEY_PATH + ".pub", encoding="utf-8") as f:
+        return f.read().strip()
+
+
+def _key_login_works(host):
+    return subprocess.run(["ssh", "-o", "BatchMode=yes", *SSH_OPTS, host, "true"],
+                          capture_output=True, stdin=subprocess.DEVNULL).returncode == 0
+
+
+def authorize_key(host):
+    """Adds this computer's key to host's authorized_keys; ssh asks for host's password once."""
+    pub = ensure_key()
+    proc = subprocess.run(["ssh", *SSH_OPTS, host,
+                           "mkdir -p ~/.ssh && chmod 700 ~/.ssh && cat >> ~/.ssh/authorized_keys && "
+                           "chmod 600 ~/.ssh/authorized_keys"], input=(pub + "\n").encode())
+    if proc.returncode != 0:
+        raise ServerError(f"Could not authorize the key on {host} (wrong password?)")
+
+
+def nas_key_request():
+    """Message for the NAS admin: authorizing this computer's key means nobody here needs the NAS password."""
+    pub = ensure_key()
+    return (f"Please give this computer key access to the NAS ({HOST}) by adding this line to that\n"
+            f"account's ~/.ssh/authorized_keys:\n\n{pub}\n\n"
+            f"Or, sitting at this computer, run this in the app folder and type the NAS password once:\n"
+            f"    .venv\\Scripts\\python server_videos.py authorize-nas")
+
+
 def _setup():
     """One-time setup on a new annotator machine: SSH key login to the shared annotation machine
     (uploads + shared annotated list), then the shared lists and the NAS check."""
     _require(ANNOTATED_HOST)
     _require(HOST)
-    key = os.path.join(os.path.expanduser("~"), ".ssh", "id_ed25519")
-    if not os.path.exists(key + ".pub"):
-        os.makedirs(os.path.dirname(key), exist_ok=True)
-        print("Creating an SSH key for this computer...")
-        if subprocess.run(["ssh-keygen", "-q", "-t", "ed25519", "-N", "", "-f", key]).returncode != 0:
-            raise ServerError("ssh-keygen failed (is OpenSSH installed?)")
-
-    ok = subprocess.run(["ssh", "-o", "BatchMode=yes", *SSH_OPTS, ANNOTATED_HOST, "true"],
-                        capture_output=True, stdin=subprocess.DEVNULL).returncode == 0
-    if ok:
+    ensure_key()
+    if _key_login_works(ANNOTATED_HOST):
         print(f"{ANNOTATED_HOST}: key login already works.")
     else:
         print(f"Authorizing this computer on {ANNOTATED_HOST}: enter its password once.")
-        with open(key + ".pub", "rb") as f:
-            pub = f.read()
-        proc = subprocess.run(["ssh", *SSH_OPTS, ANNOTATED_HOST,
-                               "mkdir -p ~/.ssh && chmod 700 ~/.ssh && cat >> ~/.ssh/authorized_keys && "
-                               "chmod 600 ~/.ssh/authorized_keys"], input=pub)
-        if proc.returncode != 0:
-            raise ServerError(f"Could not authorize the key on {ANNOTATED_HOST} (wrong password?)")
+        authorize_key(ANNOTATED_HOST)
         print("Done: uploads will no longer ask for a password.")
 
     raw, meta = sync_annotated()
     print(f"Shared annotation lists synced: {len(raw)} raw folders, {len(meta)} metadata files.")
-    print(f"Checking the NAS ({HOST}); it may ask for the NAS password:")
-    print(check_connection())
+    print(f"Checking the NAS ({HOST})...")
+    try:
+        print(check_connection())
+    except AuthRequired:
+        # Without the NAS password the rest of setup still stands; downloads work once the key is authorized
+        print("\nThis computer's key isn't authorized on the NAS yet. Send this to the NAS admin:\n")
+        print(nas_key_request())
+        print("\n(If you do have the NAS password, the app asks for it on the first download.)")
     print("\nSetup complete. Start the app with: python app.py")
 
 
@@ -630,6 +662,8 @@ def main():
     sub = parser.add_subparsers(dest="cmd")
     sub.add_parser("setup", help="One-time setup on a new annotator's computer")
     sub.add_parser("check", help="Test the SSH connection and archive path")
+    sub.add_parser("key", help="Print the request to send the NAS admin for key access (no NAS password needed)")
+    sub.add_parser("authorize-nas", help="Authorize this computer's key on the NAS (asks the NAS password once)")
     p_idx = sub.add_parser("index", help="List videos in the archive (cached)")
     p_idx.add_argument("--refresh", action="store_true")
     p_ann = sub.add_parser("annotated", help="Sheet rows already annotated in sign_annotation/raw")
@@ -677,6 +711,19 @@ def _run_command(args, parser):
         _setup()
         return
     if args.cmd == "check":
+        print(check_connection())
+        return
+    if args.cmd == "key":
+        print(nas_key_request())
+        return
+    if args.cmd == "authorize-nas":
+        _require(HOST)
+        if _key_login_works(HOST):
+            print(f"{HOST}: key login already works.")
+            return
+        print(f"Authorizing this computer on {HOST}: enter the NAS password once.")
+        authorize_key(HOST)
+        print("Done: the NAS will no longer ask for a password on this computer.")
         print(check_connection())
         return
 

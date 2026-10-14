@@ -197,14 +197,29 @@ class ServerBrowser(UiQueueMixin, tk.Toplevel):
     def ask_password_and_retry(self, reason, work):
         self.set_status(reason)
         password = simpledialog.askstring(
-            "NAS password", f"{reason}\n\nPassword for {server_videos.HOST} (kept in memory for this session only):",
+            "NAS password", f"{reason}\n\nPassword for {server_videos.HOST} (kept in memory for this session only).\n"
+                            "No password? Click Cancel to get a key request for the NAS admin.",
             show="•", parent=self)
         if not password:
             self.want_next = False
-            self.set_status("Cancelled: the NAS needs its password.")
+            self.set_status("Cancelled: the NAS needs its password or an authorized key.")
+            self.show_key_request()
             return
         server_videos.set_password(password)
         self.run_in_background(work)
+
+    def show_key_request(self):
+        """Puts the admin request (this computer's public key) on the clipboard and shows it."""
+        try:
+            text = server_videos.nas_key_request()
+        except server_videos.ServerError as e:
+            messagebox.showerror("SSH key", str(e), parent=self)
+            return
+        self.clipboard_clear()
+        self.clipboard_append(text)
+        messagebox.showinfo("Ask the NAS admin for access",
+                            "Copied to the clipboard, paste it to the NAS admin. Once they add the key, "
+                            "downloads work without a password.\n\n" + text, parent=self)
 
     # ---- UI ----
     def set_status(self, text, pct=None):
