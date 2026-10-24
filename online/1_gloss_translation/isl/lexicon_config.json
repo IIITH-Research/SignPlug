@@ -1,0 +1,127 @@
+{
+  "_doc": "Hand-written knowledge about the gloss folder names in sign_annotation/raw. Folders not listed here are parsed automatically: '(Sign_N)' / '_Sign_N' / regional labels = variant (ignored), trailing ALL-CAPS parts like (BSP) = abbreviation alias, underscores = true multi-word gloss.",
+
+  "cue_sets": {
+    "govt": ["government", "govt", "ministry", "minister", "yojana", "launch", "beneficiary", "subsidy", "pension", "welfare", "pm", "central", "centre", "public", "citizen", "farmer", "apply", "scholarship", "loan", "official"],
+    "cricket": ["cricket", "ball", "batsman", "batting", "bowler", "bowl", "wicket", "stump", "match", "six", "four", "run", "innings", "pitch", "hit", "score", "century", "team", "ipl"],
+    "panel": ["member", "meeting", "director", "chairman", "committee", "exam", "examination", "cbse", "decision", "approve", "education", "result"],
+    "academic": ["certificate", "admission", "reservation", "category", "sc", "st", "obc", "college", "school", "university", "form", "application", "quota"],
+    "when": ["today", "tomorrow", "yesterday", "birthday", "month", "year", "day", "calendar", "deadline", "exam", "meeting", "schedule", "fix", "birth", "expiry", "due", "january", "february", "march", "april", "may", "june", "july", "august", "september", "october", "november", "december"],
+    "social_media": ["post", "photo", "picture", "pic", "video", "status", "reel", "story", "comment", "share", "tweet", "page", "facebook", "instagram", "youtube", "twitter", "whatsapp", "online", "profile"],
+    "news": ["news", "information", "info", "latest", "status", "inform", "report", "notice", "announcement", "progress", "situation", "regarding"],
+    "ant": ["ant", "termite", "insect"],
+    "dog": ["dog", "puppy"],
+    "competition": ["match", "game", "team", "election", "competition", "opponent", "win", "defeat", "race", "tournament", "final", "rival", "contest"],
+    "announcement": ["news", "statement", "result", "list", "notice", "report", "official", "government", "press", "announcement", "schedule"],
+    "time_unit": ["minute", "hour", "time", "clock", "wait", "moment", "stopwatch", "few", "just"],
+    "person": ["man", "woman", "person", "people", "lady", "gentleman", "father", "mother", "grandfather", "grandmother", "uncle", "aunt", "husband", "wife", "patient", "citizen", "he", "she", "they", "someone"],
+    "catch_things": ["ball", "throw", "toss", "drop", "fall", "key", "bottle", "object"],
+    "video": ["video", "camera", "film", "movie", "youtube", "clip"],
+    "camera": ["photo", "photograph", "picture", "pic", "camera", "selfie", "photographer", "album"]
+  },
+
+  "senses": {
+    "Bat_(Cricket)":                  {"word": "bat",     "upos": ["NOUN", "VERB"], "cues": "cricket"},
+    "Batsman_(Cricket)":              {"word": "batsman", "upos": ["NOUN"],         "cues": "cricket"},
+    "Board_(Panel)":                  {"word": "board",   "upos": ["NOUN"],         "cues": "panel"},
+    "Caste_(Academic)":               {"word": "caste",   "upos": ["NOUN"],         "cues": "academic"},
+    "Date_(When)":                    {"word": "date",    "upos": ["NOUN"],         "cues": "when"},
+    "Like_(Social_Media)_(Sign_2)":   {"word": "like",    "upos": ["VERB", "NOUN"], "cues": "social_media"},
+    "Scheme_(Govt_Scheme)":           {"word": "scheme",  "upos": ["NOUN"],         "cues": "govt"},
+    "Update_(News_Information)":      {"word": "update",  "upos": ["NOUN", "VERB"], "cues": "news"},
+
+    "_doc_video_labels": "Qualifiers shown only on the video label. Kept only where they separate homonyms; nuance-only ones (rain (heavy rain), when (for days), charger (phone), loan (bank)) are not restricted.",
+    "Second":                         {"word": "second",  "upos": ["NOUN"],         "cues": "time_unit"},
+    "old":                            {"word": "old",     "upos": ["ADJ"],          "cues": "person"},
+    "catch":                          {"word": "catch",   "upos": ["VERB"],         "cues": "catch_things"},
+    "fit":                            {"word": "fit",     "upos": ["ADJ"]},
+    "video":                          {"word": "record",  "upos": ["VERB", "NOUN"], "cues": "video"}
+  },
+
+  "synonym_groups": {
+    "Alike_similar":                    ["alike", "similar"],
+    "Almost_Nearly":                    ["almost", "nearly"],
+    "Alternative_Option":               ["alternative", "option"],
+    "Announce_Declare_Release":         ["announce", "declare", {"word": "release", "upos": ["VERB"], "cues": "announcement"}],
+    "Annual_Yearly":                    ["annual", "yearly"],
+    "Anthill_Colony_Mound":             ["anthill", {"word": "colony", "cues": "ant"}, {"word": "mound", "cues": "ant"}],
+    "Argue_Dispute_Quarrel":            ["argue", "dispute", "quarrel"],
+    "Army_boots_Combat_boots":          ["army boots", "combat boots"],
+    "Assess_Check_Investigate":         ["assess", {"word": "check", "upos": ["VERB"]}, "investigate"],
+    "Authentic_Original":               ["authentic", "original"],
+    "Average_Mediocre":                 [{"word": "average", "upos": ["ADJ"]}, "mediocre"],
+    "Award_Prize":                      ["award", "prize"],
+    "Back_Return":                      [{"word": "back", "upos": ["ADV", "ADP"]}, "return"],
+    "Backdoor_or_Trapdoor_(Sign_2)":    ["backdoor", "trapdoor"],
+    "Backstab_Betray":                  ["backstab", "betray"],
+    "Bad_Language_Verbal_Abuse":        ["bad language", "verbal abuse"],
+    "Bandh_General_strike":             ["bandh", "general strike"],
+    "Bark_Bow-Wow_Woof":                [{"word": "bark", "cues": "dog"}, "bow-wow", "woof"],
+    "Bear_Endure_Tolerate":             [{"word": "bear", "upos": ["VERB"]}, "endure", "tolerate"],
+    "Beat_Triumph_Outdo_Be_victorious": [{"word": "beat", "upos": ["VERB"], "cues": "competition"}, "triumph", "outdo", "victorious"],
+    "Beehive_Hive":                     ["beehive", "hive"]
+  },
+
+  "extra_forms": {
+    "_doc": "Words shown on the sign video (pics/<folder>, first two frames) that the folder name does not show. A value is a list of forms, or {gloss, forms} when the folder name is misspelt.",
+    "access":          ["accessible"],
+    "addicted":        ["dependent", "hooked"],
+    "Afraid":          ["scared"],
+    "Again_and_again": ["repeatedly", "over and over again"],
+    "Air_India":       ["alliance air"],
+    "chance":          ["opportunity"],
+    "chicken":         ["chick"],
+    "cost":            ["rate", "price"],
+    "count":           ["maths", "math"],
+    "Die":             ["death"],
+    "empty":           ["none", "nothing"],
+    "finish":          ["complete"],
+    "hard":            ["difficult"],
+    "hear":            ["listen"],
+    "Home":            ["house"],
+    "I":               ["me"],
+    "lie":             ["false"],
+    "no":              ["not", "n't"],
+    "out":             ["outside"],
+    "pants":           ["trousers"],
+    "speak":           ["speech"],
+    "start":           ["begin"],
+    "surprised":       ["shocked"],
+    "Table":           ["desk"],
+    "Week":            ["one week"],
+    "shoes":           ["sports shoes", "sneakers", "trainers"],
+    "strong":          ["brave"],
+    "build":           ["construct"],
+    "impact":          ["affect"],
+    "travel":          ["trip", "tour"],
+    "advice":          ["advise"],
+    "_doc_meaning":    "A {word, upos, cues} form is used only in that meaning; ambiguous label words are split this way.",
+    "photo":           [{"word": "shoot", "cues": "camera"}],
+    "pause":           [{"word": "break", "upos": ["NOUN"]}],
+
+    "Anitibiotic":     {"gloss": "ANTIBIOTIC",      "forms": ["antibiotic"]},
+    "Aligator_Clip":   {"gloss": "ALLIGATOR_CLIP",  "forms": ["alligator clip"]},
+    "Ballon_Pump":     {"gloss": "BALLOON_PUMP",    "forms": ["balloon pump"]},
+    "Airbubble":       {"gloss": "AIR_BUBBLE",      "forms": ["air bubble"]},
+    "Aftershave":      {"gloss": "AFTERSHAVE",      "forms": ["aftershave lotion"]}
+  },
+
+  "label_only": {
+    "_doc": "Only the label's words use the sign; the folder name alone does not (a different sign exists, e.g. elder vs younger brother; or the folder name is a typo). Gloss = first label.",
+    "brother":   ["younger brother"],
+    "sister":    ["younger sister"],
+    "Baby_Bot":  ["baby cot"]
+  },
+
+  "exclude": {
+    "_doc": "Folders that are not dictionary glosses: German sign-language clips (orange background, no label), and poses the demo uses internally (neutral rest pose, letter-I signs for fingerspelling).",
+    "folders": ["APRIL", "DIENSTAG", "JETZT", "MORGEN", "SECHSTE", "WETTER",
+                "Neutral_pose", "I_sign1", "I_sign2"]
+  },
+
+  "single_tokens": {
+    "AirJet":   {"gloss": "AIRJET",   "forms": ["airjet", "air jet"]},
+    "Band-Aid": {"gloss": "BAND-AID", "forms": ["band-aid", "band - aid", "band aid", "bandaid"]},
+    "2_Two":    {"gloss": "TWO",      "forms": ["2", "two"]}
+  }
+}

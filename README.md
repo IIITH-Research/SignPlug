@@ -1,94 +1,80 @@
-# ISL-AVATAR-PROJECT
+# SignPlug - ISL plugin for the web
 
-This repo contains the **core pipeline** for an ISL avatar system:
+Code for **SignPlug**, a lightweight, real-time framework that synthesizes Indian Sign Language (ISL)
+avatar motion from English sentences directly in the browser (ICVGIP 2026).
 
-Video → MediaPipe keypoints → JSON animation clip → Browser renderer
+**Paper:** [OpenReview](https://openreview.net/forum?id=nFcPxtNxsX) ·
+**Project page:** [sharif-commits.github.io/SignPlug](https://sharif-commits.github.io/SignPlug/)
 
-> **Annotating keyframes?** See the annotator app guide:
-> [skinning/src/intepolation_code/README.md](skinning/src/intepolation_code/README.md)
+## Pipeline
 
-## 1) Install dependencies
+The code follows the two stages of the paper.
 
-If you already ran `pip install mediapipe opencv-python numpy`, you can skip this.
+| Stage | Step | Folder |
+|---|---|---|
+| **Offline: Widget Dictionary construction** (paper §3.1) | 1. SMPL-X pose estimation from ISLRTC dictionary videos (SMPLer-X) | [`offline/1_pose_estimation`](offline/1_pose_estimation) |
+| | 2. Sparse keyframe selection (start, end and keyframes per sign) | [`offline/2_keyframe_selection`](offline/2_keyframe_selection) |
+| | 3. Manual pose correction with the Gizmo tool | [`offline/3_gizmo_correction`](offline/3_gizmo_correction) |
+| | 4. Canonical SMPL-X avatar export for three.js | [`offline/4_avatar_export`](offline/4_avatar_export) |
+| **Online: sentence-level synthesis** (paper §3.2) | 1. English sentence → ISL glosses (demo translator) | [`online/1_gloss_translation`](online/1_gloss_translation) |
+| | 2. Keypose retrieval + per-bone SLERP interpolation | [`online/2_interpolation`](online/2_interpolation) |
+| | 3. Web widget: server + three.js avatar playback | [`online/3_web_widget`](online/3_web_widget) |
+| **Evaluation** (paper §4) | Gloss retrieval with Uni-Sign embeddings, avatar rendering | [`evaluation`](evaluation) |
 
-```bash
-pip install -r requirements.txt
+```
+offline/
+  1_pose_estimation/      SMPLer-X inference script + frame extraction notebook
+  2_keyframe_selection/   desktop keyframe annotator (app.py)
+  3_gizmo_correction/     Gizmo: browser tool for correcting SMPL-X keyposes
+  4_avatar_export/        export_smplx_avatar.py: rigged canonical avatar (GLB) + hand mean poses
+online/
+  1_gloss_translation/    rule-based demo translator (isl/), tests and test cases
+  2_interpolation/        live_interpolate.py
+  3_web_widget/           Flask server + page with the signing avatar
+evaluation/
+  retrieval/              Uni-Sign pose extraction, embeddings and Top-k retrieval
+  rendering/              render SMPL-X keyposes to video
+prototypes/               early MediaPipe skeletonization and skinning experiments
 ```
 
-## 2) Extract a JSON clip from the video
+## What is not included
 
-Input video is already included here:
+- **SMPL-X / SMPLer-X model files.** They are licensed separately; download them from
+  [smpl-x.is.tue.mpg.de](https://smpl-x.is.tue.mpg.de/) and the
+  [SMPLer-X repository](https://github.com/caizhongang/SMPLer-X). The avatar GLB and `hand_means.npz` are
+  generated from them by `offline/4_avatar_export/export_smplx_avatar.py`.
+- **Sign videos and the Widget Dictionary keyposes.** The source videos belong to the ISLRTC dictionary,
+  and the dictionary is not released with this code.
 
-- `dataset/Apple.mp4`
-
-Run the extractor:
-
-```bash
-python extract.py
-```
-
-First run note: `extract.py` downloads a MediaPipe model into `models/` (one-time).
-
-This produces:
-
-- `clips/apple.json`
-
-### Useful options
+## Running the web widget
 
 ```bash
-python extract.py --input dataset/Apple.mp4 --output clips/apple.json --target-fps 30 --precision 5
+cd online/1_gloss_translation && pip install -r requirements.txt
+python -c "import stanza, nltk; stanza.download('en'); nltk.download('wordnet'); nltk.download('omw-1.4')"
+pip install flask numpy scipy
+# put hand_means.npz in online/2_interpolation/ and the avatar GLB in online/3_web_widget/static/assets/
+SIGN_ANNOTATION_DIR=/path/to/sign_annotation python online/3_web_widget/server.py --port 8080
 ```
 
-### Face landmarks (optional but enabled by default)
+`SIGN_ANNOTATION_DIR` must contain `raw/<gloss>/` and `corrected/<gloss>_corrected/*.npz`, the layout
+written by the keyframe and Gizmo tools. See each folder's README for details.
 
-Face landmarks (often 468 or 478 points depending on the model) make the JSON bigger. You can control it:
+## Development history
 
-- Disable face entirely:
+Early work (MediaPipe skeletonization, skinning, axis conventions) is kept in [`prototypes/`](prototypes)
+and in the handover branches (`skeleton-code`, `skin-code`, `rotations-handover`,
+`interpolations-handover`, `app-handover`). The [issues](https://github.com/sharif-commits/ISL-AVATAR-PROJECT/issues)
+record the problems we ran into along the way.
 
-```bash
-python extract.py --no-face
-```
+## Acknowledgements
 
-- Keep face but reduce size (recommended when clips get long):
+This work is supported by MeitY, Government of India, through the NLTM-Bhashini project.
+The demo translator implements the rules of Ghosh and Mamidi,
+*English To Indian Sign Language: Rule-Based Translation System Along With Multi-Word Expressions and
+Synonym Substitution*, ICON 2022. We build on [SMPL-X](https://smpl-x.is.tue.mpg.de/),
+[SMPLer-X](https://github.com/caizhongang/SMPLer-X), [three.js](https://threejs.org/),
+[Stanza](https://stanfordnlp.github.io/stanza/) and [Uni-Sign](https://github.com/ZechengLi19/Uni-Sign).
 
-```bash
-python extract.py --face-precision 3 --face-every-n 2
-```
+## Citation
 
-## 2D Avatar skinning (minimal datapoints)
-
-If your goal is a **fast 2D skinned avatar** (instant web rendering), you usually do **not** need the full face mesh.
-
-Use the `avatar2d` preset:
-
-```bash
-python extract.py --preset avatar2d
-```
-
-What it does (minimal + efficient):
-- `face_mode = pose`: face is only 11 pose points (nose/eyes/ears/mouth)
-- `hand_mode = tips`: hands are 6 points (wrist + fingertips)
-
-You can still override:
-
-```bash
-python extract.py --preset avatar2d --hand-mode full
-```
-
-- `--target-fps`: resamples the clip to ~30 fps (good for browser playback)
-- `--precision`: lower = smaller JSON (e.g., 4) but slightly less accurate
-- `--model-complexity`: 0 faster, 2 more accurate (default 1)
-
-## 3) Render it in the browser
-
-Browsers block `fetch()` from local files, so run a local server:
-
-```bash
-python -m http.server 8000
-```
-
-Then open:
-
-- http://localhost:8000
-
-You should see **moving green dots** (pose + hands), looping the APPLE sign.
+The BibTeX entry will be added once the ICVGIP 2026 proceedings are published.

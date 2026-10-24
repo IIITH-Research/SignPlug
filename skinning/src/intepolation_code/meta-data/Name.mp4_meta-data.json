@@ -1,9 +1,0 @@
-{
-    "video_name": "Name.mp4",
-    "interpolate_start": 30,
-    "interpolate_end": 46,
-    "keyframes": [
-        30,
-        46
-    ]
-}

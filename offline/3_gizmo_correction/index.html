@@ -1,0 +1,372 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>SMPL-X Avatar Debug</title>
+    <style>
+        body { 
+            margin: 0; 
+            padding: 0;
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+            background-color: #2a2a2a; 
+            color: #ffffff;
+            overflow: hidden; /* Prevent scrolling for full screen */
+            display: flex;
+            height: 100vh;
+            width: 100vw;
+        }
+        
+        #avatar-container {
+            flex: 1;
+            position: relative;
+            background-color: #2a2a2a;
+            display: flex;
+            flex-direction: row;
+            overflow: hidden;
+        }
+
+        #image-pane {
+            flex: 1; 
+            border-right: 2px solid #333; 
+            display: flex; 
+            justify-content: center; 
+            align-items: center; 
+            background: #000;
+        }
+
+        #canvas-wrapper {
+            flex: 1; 
+            height: 100%;
+        }
+
+        #sidebar {
+            width: 280px;
+            min-width: 280px;
+            background: #1e1e1e;
+            padding: 15px;
+            box-sizing: border-box;
+            overflow-y: auto;
+            border-left: 1px solid #333;
+            box-shadow: -2px 0 10px rgba(0,0,0,0.5);
+            transition: margin-right 0.3s ease;
+            z-index: 10;
+        }
+
+        #sidebar.collapsed {
+            margin-right: -280px;
+        }
+
+        #sidebar-toggle {
+            position: fixed;
+            right: 280px;
+            top: 20px;
+            background: #e91e63;
+            color: white;
+            border: none;
+            padding: 10px 8px;
+            cursor: pointer;
+            z-index: 1000;
+            border-radius: 4px 0 0 4px;
+            transition: right 0.3s ease;
+            box-shadow: -2px 0 5px rgba(0,0,0,0.5);
+            font-weight: bold;
+        }
+
+        #sidebar.collapsed ~ #sidebar-toggle {
+            right: 0px;
+            border-radius: 4px 0 0 4px;
+        }
+
+        #sidebar-toggle:hover {
+            background: #d81b60;
+        }
+
+        .control-group {
+            background: rgba(255,255,255,0.05);
+            padding: 10px;
+            border-radius: 4px;
+            margin-bottom: 15px;
+        }
+        .btn {
+            background: #444;
+            color: white;
+            border: 1px solid #555;
+            padding: 8px 12px;
+            border-radius: 4px;
+            cursor: pointer;
+            font-size: 13px;
+        }
+        .btn:hover { background: #555; }
+        
+        .xyz-row { display: flex; align-items: center; justify-content: space-between; margin-bottom: 5px; }
+        .adj-btn {
+            background: #333; color: white; border: 1px solid #555; border-radius: 3px;
+            width: 24px; height: 24px; cursor: pointer; font-weight: bold;
+        }
+        .adj-btn:hover { background: #555; }
+        
+        #unsaved-modal {
+            display: none;
+            position: fixed;
+            top: 50%;
+            left: 50%;
+            transform: translate(-50%, -50%);
+            background: #222;
+            padding: 25px;
+            border: 1px solid #555;
+            border-radius: 8px;
+            z-index: 2000;
+            box-shadow: 0 4px 20px rgba(0,0,0,0.5);
+            min-width: 300px;
+        }
+
+        /* Fullscreen mode classes */
+        body.image-fullscreen-mode #canvas-wrapper,
+        body.image-fullscreen-mode #resizer {
+            display: none !important;
+        }
+        body.image-fullscreen-mode #image-pane {
+            flex: 1 1 100% !important;
+            max-width: 100% !important;
+        }
+
+        body.model-fullscreen-mode #image-pane,
+        body.model-fullscreen-mode #resizer {
+            display: none !important;
+        }
+        body.model-fullscreen-mode #canvas-wrapper {
+            flex: 1 1 100% !important;
+            max-width: 100% !important;
+        }
+
+        /* Custom Scrollbar */
+        ::-webkit-scrollbar {
+            width: 8px;
+            height: 8px;
+        }
+        ::-webkit-scrollbar-track {
+            background: #1a1a1a;
+            border-radius: 4px;
+        }
+        ::-webkit-scrollbar-thumb {
+            background: #555;
+            border-radius: 4px;
+        }
+        ::-webkit-scrollbar-thumb:hover {
+            background: #777;
+        }
+        * {
+            scrollbar-width: thin;
+            scrollbar-color: #555 #1a1a1a;
+        }
+    </style>
+    <script type="importmap">
+      {
+        "imports": {
+          "three": "https://unpkg.com/three@0.158.0/build/three.module.js",
+          "three/addons/": "https://unpkg.com/three@0.158.0/examples/jsm/",
+          "lil-gui": "https://unpkg.com/lil-gui@0.19.1/dist/lil-gui.esm.min.js"
+        }
+      }
+    </script>
+    <script src="./assets/idb-keyval.js"></script>
+    <script src="./assets/fflate.js"></script>
+</head>
+<body>
+
+    <div id="avatar-container" style="display: flex; flex-direction: row; overflow: hidden; width: 100%; height: 100%;">
+        <div id="image-pane" style="flex: 0 0 50%; min-width: 10%; position: relative; display: flex; justify-content: center; align-items: center; background: #000;">
+            <button class="fullscreen-btn" id="fs-image-btn" style="position: absolute; top: 10px; left: 10px; background: rgba(255,255,255,0.2); border: none; color: white; padding: 5px 10px; border-radius: 4px; cursor: pointer; z-index: 20; font-size: 16px;" title="Fullscreen Image">⛶</button>
+            <img id="reference-image" style="width: 100%; height: 100%; object-fit: contain; display: none;" />
+            <div id="no-image-text" style="color: #666; font-family: monospace;">No reference image</div>
+        </div>
+        <div id="resizer" style="width: 6px; cursor: col-resize; background: #333; z-index: 10; border-left: 1px solid #555; border-right: 1px solid #111;"></div>
+        <div id="canvas-wrapper" style="flex: 1 1 0%; min-width: 10%; height: 100%; position: relative;">
+            <button class="fullscreen-btn" id="fs-canvas-btn" style="position: absolute; top: 10px; left: 10px; background: rgba(255,255,255,0.2); border: none; color: white; padding: 5px 10px; border-radius: 4px; cursor: pointer; z-index: 20; font-size: 16px;" title="Fullscreen 3D Model">⛶</button>
+        </div>
+    </div>
+
+    <div id="sidebar">
+        <!-- Load & Save Buttons (Compact) -->
+        <div style="margin-bottom: 12px; display: flex; flex-direction: column; gap: 8px;">
+            <button class="btn" id="load-folder-btn" style="background: #e91e63; border: none; font-weight: bold; padding: 10px; font-size: 14px;">Load Gloss</button>
+            <button class="btn" id="save-all-btn" style="background: #4CAF50; border: none; font-weight: bold; padding: 10px; font-size: 14px;">Save All Changes</button>
+            <div style="display: flex; gap: 8px;">
+                <button class="btn" id="save-btn" style="flex: 1; background: #f39c12; border: none; font-weight: bold; padding: 10px; font-size: 14px;">Save Frame</button>
+                <button class="btn" id="discard-btn" style="display: none; flex: 1; background: #e74c3c; border: none; font-weight: bold; padding: 10px; font-size: 14px;">Discard</button>
+            </div>
+        </div>
+        
+        <!-- Active Animation -->
+        <div style="margin-bottom: 8px; border-bottom: 1px solid #444; padding-bottom: 8px;">
+            <span style="font-size: 10px; text-transform: uppercase; color: #888; letter-spacing: 1px;">Active Animation</span>
+            <div id="active-file-display" style="font-size: 14px; font-weight: bold; margin-top: 2px; margin-bottom: 12px;">
+                None <span style="font-size:11px; font-weight:normal; padding:2px 6px; border-radius:3px; background:#666; color:white; margin-left:8px; vertical-align:middle;">Empty</span>
+            </div>
+            
+            <div style="display: flex; flex-direction: column; gap: 8px;">
+                <div style="display: flex; gap: 8px;">
+                    <button class="btn" id="load-default-left-btn" style="flex: 1; background: #2196F3; border: none; font-weight: bold; padding: 10px; font-size: 13px;">Default Left Hand</button>
+                    <button class="btn" id="load-default-right-btn" style="flex: 1; background: #2196F3; border: none; font-weight: bold; padding: 10px; font-size: 13px;">Default Right Hand</button>
+                </div>
+                <button class="btn" id="revert-original-btn" style="background: #e74c3c; border: none; font-weight: bold; padding: 10px; font-size: 14px;">Revert Frame to Original</button>
+            </div>
+        </div>
+        
+        <!-- Frame Controls -->
+        <h2 style="margin-top:0; font-size:15px; margin-bottom: 5px;">Frame <span id="current-frame-display">0</span> <span id="total-frames-display" style="font-size:11px; color:#888; font-weight:normal;"></span></h2>
+        <div style="display:flex; gap: 8px; margin-bottom: 8px;">
+            <button class="btn" id="prev-frame-btn" style="flex:1; padding: 10px; font-size: 14px; font-weight: bold;">Prev</button>
+            <button class="btn" id="next-frame-btn" style="flex:1; padding: 10px; font-size: 14px; font-weight: bold;">Next</button>
+        </div>
+        <div style="margin-bottom: 10px; display: flex; flex-direction: column; gap: 4px;">
+            <div style="display: flex; gap: 4px; align-items: center;">
+                <input type="number" id="copy-frame-input" placeholder="From #" min="0" style="width: 70px; background: #222; color: white; border: 1px solid #444; border-radius: 3px; padding: 6px; font-size: 12px; font-weight: bold;">
+                <button class="btn" id="copy-specific-frame-btn" style="background: #007aff; border: none; flex: 1; font-weight: bold; padding: 6px; font-size: 12px;">Paste Pose to Current Frame</button>
+            </div>
+            <div style="display: flex; gap: 4px;">
+                <button class="btn" id="copy-l-fingers-btn" style="background: #4CAF50; border: none; flex: 1; font-weight: bold; padding: 4px; font-size: 11px;">Transfer L Fingers</button>
+                <button class="btn" id="copy-r-fingers-btn" style="background: #4CAF50; border: none; flex: 1; font-weight: bold; padding: 4px; font-size: 11px;">Transfer R Fingers</button>
+            </div>
+        </div>
+        
+        <!-- Camera Focus & Visibility (Moved UP) -->
+        <div class="control-group" style="border-top: 1px solid #444; padding-top: 6px; margin-bottom: 8px;">
+            <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 4px;">
+                <h4 style="margin:0; font-size: 13px;">Camera</h4>
+                <div style="display:flex; gap: 3px;">
+                    <button class="btn" id="focus-full" style="padding: 3px 6px; font-size: 10px;">Full</button>
+                    <button class="btn" id="focus-left" style="padding: 3px 6px; font-size: 10px;">L Hand</button>
+                    <button class="btn" id="focus-right" style="padding: 3px 6px; font-size: 10px;">R Hand</button>
+                </div>
+            </div>
+            <label style="display:flex; align-items:center; gap:6px; font-size:12px; color:#ddd; cursor:pointer; margin-bottom: 4px;">
+                <input type="checkbox" id="show-all-bones-toggle" style="accent-color:#e91e63;" checked> Show all bones
+            </label>
+            <label style="display:flex; align-items:center; gap:6px; font-size:12px; color:#ddd; cursor:pointer;">
+                <input type="checkbox" id="enable-gizmo-toggle" style="accent-color:#4CAF50;" checked> Enable 3D Gizmo
+            </label>
+        </div>
+
+        <!-- Selected Bone -->
+        <div style="border-top: 1px solid #444; padding-top: 6px; margin-bottom: 8px;">
+            <h3 style="margin:0; font-size:14px; margin-bottom: 4px;">Bone: <span id="selected-bone-name" style="color:#4CAF50;">None</span></h3>
+            <button class="btn" id="deselect-bone-btn" style="background: #555; width: 100%; padding: 4px; font-size: 12px;">Deselect</button>
+        </div>
+
+        <!-- Rotation Inputs -->
+        <div class="control-group" style="padding-top: 2px; margin-bottom: 8px;">
+            <div style="margin-bottom:4px; display:flex; align-items:center;">
+                <span style="font-size: 13px; font-weight: bold; margin-right: 5px;">Rotation</span>
+                <span style="background: #e91e63; color: white; font-size: 9px; padding: 2px 4px; border-radius: 3px; text-transform: uppercase;">↕ Hover Scrollable</span>
+            </div>
+            <div class="xyz-row" id="rot-x-row" style="margin-bottom: 4px;">
+                <span style="font-size: 12px;">X: <input type="number" id="rot-x-val" value="0" step="1" style="width: 45px; background: #222; color: white; border: 1px solid #444; border-radius: 3px; padding: 1px; font-size: 12px;">&deg;</span>
+                <div>
+                    <button class="adj-btn" id="rot-x-minus" style="padding: 1px 6px;">-</button>
+                    <button class="adj-btn" id="rot-x-plus" style="padding: 1px 6px;">+</button>
+                </div>
+            </div>
+            <div class="xyz-row" id="rot-y-row" style="margin-bottom: 4px;">
+                <span style="font-size: 12px;">Y: <input type="number" id="rot-y-val" value="0" step="1" style="width: 45px; background: #222; color: white; border: 1px solid #444; border-radius: 3px; padding: 1px; font-size: 12px;">&deg;</span>
+                <div>
+                    <button class="adj-btn" id="rot-y-minus" style="padding: 1px 6px;">-</button>
+                    <button class="adj-btn" id="rot-y-plus" style="padding: 1px 6px;">+</button>
+                </div>
+            </div>
+            <div class="xyz-row" id="rot-z-row">
+                <span style="font-size: 12px;">Z: <input type="number" id="rot-z-val" value="0" step="1" style="width: 45px; background: #222; color: white; border: 1px solid #444; border-radius: 3px; padding: 1px; font-size: 12px;">&deg;</span>
+                <div>
+                    <button class="adj-btn" id="rot-z-minus" style="padding: 1px 6px;">-</button>
+                    <button class="adj-btn" id="rot-z-plus" style="padding: 1px 6px;">+</button>
+                </div>
+            </div>
+        </div>
+
+        <!-- Root Translation Inputs (Collapsible, edits frame.transl) -->
+        <details class="control-group" style="padding-top: 2px; margin-bottom: 8px; border-top: 1px solid #444; padding-bottom: 6px;">
+            <summary style="font-size: 13px; font-weight: bold; cursor: pointer; outline: none; margin-top: 6px; margin-bottom: 6px;">Root Position / Translation</summary>
+            <div style="margin-bottom:4px; display:flex; align-items:center;">
+                <span style="font-size: 11px; margin-right: 5px; color:#aaa;">Move entire body</span>
+                <span style="background: #007aff; color: white; font-size: 9px; padding: 2px 4px; border-radius: 3px; text-transform: uppercase;">↕ Hover Scrollable</span>
+            </div>
+            <div class="xyz-row" id="trans-x-row" style="margin-bottom: 4px;">
+                <span style="font-size: 12px;">X: <input type="number" id="trans-x-val" value="0" step="0.01" style="width: 45px; background: #222; color: white; border: 1px solid #444; border-radius: 3px; padding: 1px; font-size: 12px;"> m</span>
+                <div>
+                    <button class="adj-btn" id="trans-x-minus" style="padding: 1px 6px;">-</button>
+                    <button class="adj-btn" id="trans-x-plus" style="padding: 1px 6px;">+</button>
+                </div>
+            </div>
+            <div class="xyz-row" id="trans-y-row" style="margin-bottom: 4px;">
+                <span style="font-size: 12px;">Y: <input type="number" id="trans-y-val" value="0" step="0.01" style="width: 45px; background: #222; color: white; border: 1px solid #444; border-radius: 3px; padding: 1px; font-size: 12px;"> m</span>
+                <div>
+                    <button class="adj-btn" id="trans-y-minus" style="padding: 1px 6px;">-</button>
+                    <button class="adj-btn" id="trans-y-plus" style="padding: 1px 6px;">+</button>
+                </div>
+            </div>
+            <div class="xyz-row" id="trans-z-row">
+                <span style="font-size: 12px;">Z: <input type="number" id="trans-z-val" value="0" step="0.01" style="width: 45px; background: #222; color: white; border: 1px solid #444; border-radius: 3px; padding: 1px; font-size: 12px;"> m</span>
+                <div>
+                    <button class="adj-btn" id="trans-z-minus" style="padding: 1px 6px;">-</button>
+                    <button class="adj-btn" id="trans-z-plus" style="padding: 1px 6px;">+</button>
+                </div>
+            </div>
+        </details>
+
+        <!-- Gizmo Info -->
+        <div class="control-group" style="border-top: 1px solid #444; padding-top: 6px;">
+            <div style="font-size: 11px; color: #aaa; line-height: 1.5;">
+                <div style="margin-bottom: 4px; font-weight: bold; color: #ddd;">Gizmo Colors:</div>
+                <div><span style="display:inline-block;width:10px;height:10px;background:#00ff88;border-radius:50%;margin-right:4px;"></span>Hover (Select Bone)</div>
+                <div><span style="display:inline-block;width:12px;height:2px;background:#ff4444;margin-right:4px;"></span>X Ring (Red)</div>
+                <div><span style="display:inline-block;width:12px;height:2px;background:#44ff44;margin-right:4px;"></span>Y Ring (Green)</div>
+                <div style="margin-bottom: 6px;"><span style="display:inline-block;width:12px;height:2px;background:#4488ff;margin-right:4px;"></span>Z Ring (Blue)</div>
+                
+                <div style="font-weight: bold; color: #ddd; margin-bottom: 2px;">Camera Controls:</div>
+                <div><span style="color:#fff;">Left-Click Drag:</span> Rotate Camera</div>
+                <div><span style="color:#fff;">Right-Click Drag:</span> Pan Camera</div>
+                <div><span style="color:#fff;">Scroll Wheel:</span> Zoom In/Out</div>
+            </div>
+        </div>
+
+    </div>
+    
+    <button id="sidebar-toggle">▶</button>
+
+    <div id="unsaved-modal">
+        <h3 style="margin-top:0; color:#ff9800;">Unsaved Changes!</h3>
+        <p>You have unsaved tweaks on this frame. Switching frames will lose them. Do you want to save or discard?</p>
+        <div style="display:flex; justify-content:flex-end; gap: 15px; margin-top:20px;">
+            <button class="btn" id="modal-discard" style="background: #f44336;">Discard</button>
+            <button class="btn" id="modal-save" style="background: #4CAF50;">Save</button>
+        </div>
+    </div>
+
+    <!-- Gloss Selection Modal -->
+    <div id="gloss-modal" style="display: none; position: fixed; top: 0; left: 0; width: 100%; height: 100%; background: rgba(0,0,0,0.8); z-index: 3000; align-items: center; justify-content: center;">
+        <div style="background: #222; padding: 20px; border-radius: 8px; width: 400px; max-width: 90%; border: 1px solid #444; display: flex; flex-direction: column; max-height: 80vh;">
+            <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 15px;">
+                <h3 style="margin: 0; color: #fff;">
+                    Select Gloss
+                    <span id="progress-counter" style="display: none; font-size: 12px; font-weight: normal; margin-left: 10px; background: #4CAF50; color: white; padding: 2px 8px; border-radius: 12px;"></span>
+                </h3>
+                <button id="close-gloss-modal" style="background: transparent; border: none; color: #aaa; font-size: 20px; cursor: pointer;">&times;</button>
+            </div>
+            
+            <div style="display: flex; margin-bottom: 15px; border-radius: 4px; overflow: hidden; border: 1px solid #555; min-height: 35px; width: 100%;">
+                <button id="tab-raw" style="flex: 1 1 50%; width: 50%; padding: 8px; background: #e91e63; color: white; border: none; cursor: pointer; font-weight: bold; font-size: 14px; text-align: center;">Raw</button>
+                <button id="tab-corrected" style="flex: 1 1 50%; width: 50%; padding: 8px; background: #333; color: #aaa; border: none; cursor: pointer; font-weight: bold; border-left: 1px solid #555; font-size: 14px; text-align: center;">Corrected</button>
+            </div>
+            
+            <input type="text" id="gloss-search" placeholder="Search glosses..." style="width: 100%; padding: 10px; box-sizing: border-box; background: #111; color: #fff; border: 1px solid #555; border-radius: 4px; margin-bottom: 15px;">
+            
+            <div id="gloss-list" style="flex: 1; overflow-y: auto; background: #1a1a1a; border: 1px solid #333; border-radius: 4px;">
+                <!-- Gloss items injected here by JS -->
+            </div>
+        </div>
+    </div>
+
+    <script type="module" src="./app.js"></script>
+</body>
+</html>

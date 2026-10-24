@@ -1,17 +1,22 @@
+# Licensed models and data (not part of this repository)
 smplx/
-
-Skeletonization/smplx_models/
-
-skinning/src/output/
-
-skinning/src/videos/
-
+human_model_files/
 *.pkl
-
 *.npz
+*.glb
+*.task
+*.mp4
+*.zip
+dataset/
+sign_annotation/
 
-* .json
+# Generated at runtime
+online/2_interpolation/output/
+server.log
+server.pid
 
-* .mp4
-
-* .zip
+# Python / editors
+__pycache__/
+.venv/
+.ipynb_checkpoints/
+.claude/
