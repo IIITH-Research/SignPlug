@@ -3,7 +3,6 @@
 Code for **SignPlug**, a lightweight, real-time framework that synthesizes Indian Sign Language (ISL)
 avatar motion from English sentences directly in the browser (ICVGIP 2026).
 
-**Paper:** [OpenReview](https://openreview.net/forum?id=nFcPxtNxsX) ·
 **Project page:** [sharif-commits.github.io/SignPlug](https://sharif-commits.github.io/SignPlug/)
 
 ## Pipeline
