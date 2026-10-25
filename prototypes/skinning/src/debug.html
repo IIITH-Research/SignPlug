@@ -1,0 +1,274 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Avatar Translator Debug</title>
+    <style>
+        body { 
+            margin: 0; 
+            padding: 0;
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+            background-color: #2a2a2a; 
+            color: #ffffff;
+            overflow: hidden; /* Prevent scrolling for full screen */
+        }
+        
+        #avatar-container {
+            width: calc(100vw - 300px); /* Leave room for sidebar */
+            height: 100vh;
+            position: relative;
+            background-color: #2a2a2a;
+        }
+
+        #controls-wrapper {
+            position: absolute; 
+            bottom: 0; 
+            left: 0; 
+            right: 0; 
+            background: rgba(0,0,0,0.5); 
+            padding: 15px 20px; 
+            z-index: 1005; 
+            display: flex; 
+            align-items: center; 
+            gap: 15px;
+        }
+
+        #play-pause-btn {
+            background: none; 
+            border: none; 
+            color: white; 
+            cursor: pointer; 
+            font-size: 24px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            width: 40px;
+            height: 40px;
+            border-radius: 50%;
+            transition: background 0.2s;
+        }
+
+        #play-pause-btn:hover {
+            background: rgba(255, 255, 255, 0.1);
+        }
+
+        #frame-slider {
+            flex-grow: 1; 
+            cursor: pointer;
+            height: 6px;
+            -webkit-appearance: none;
+            background: rgba(255, 255, 255, 0.3);
+            border-radius: 3px;
+            outline: none;
+        }
+
+        #frame-slider::-webkit-slider-thumb {
+            -webkit-appearance: none;
+            appearance: none;
+            width: 16px;
+            height: 16px;
+            border-radius: 50%;
+            background: #ffffff;
+            cursor: pointer;
+            transition: transform 0.1s;
+        }
+
+        #frame-slider::-webkit-slider-thumb:hover {
+            transform: scale(1.2);
+        }
+
+        #sidebar {
+            position: absolute;
+            right: 0;
+            top: 0;
+            bottom: 0;
+            width: 300px;
+            background: rgba(15, 15, 15, 0.95);
+            padding: 20px;
+            box-sizing: border-box;
+            z-index: 1006;
+            overflow-y: auto;
+            border-left: 1px solid #444;
+        }
+        .control-group {
+            background: rgba(255,255,255,0.05);
+            padding: 10px;
+            margin-bottom: 15px;
+            border-radius: 5px;
+            border: 1px solid #333;
+        }
+        .control-group h4 {
+            margin-top: 0;
+            margin-bottom: 10px;
+            color: #aaa;
+        }
+        .xyz-row {
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            margin-bottom: 8px;
+        }
+        .xyz-row span {
+            width: 100px;
+            font-family: monospace;
+            font-size: 14px;
+        }
+        .adj-btn {
+            width: 35px;
+            height: 30px;
+            cursor: pointer;
+            background: #444;
+            color: white;
+            border: 1px solid #555;
+            border-radius: 3px;
+            font-weight: bold;
+        }
+        .adj-btn:hover {
+            background: #666;
+        }
+        .btn {
+            padding: 8px 12px;
+            background: #444;
+            color: white;
+            border: 1px solid #555;
+            border-radius: 3px;
+            cursor: pointer;
+        }
+        .btn:hover {
+            background: #666;
+        }
+        #save-btn {
+            width: 100%;
+            margin-top: 10px;
+            padding: 12px;
+            background: #4CAF50;
+            color: white;
+            border: none;
+            border-radius: 4px;
+            cursor: pointer;
+            font-size: 16px;
+            font-weight: bold;
+        }
+        #save-btn:hover {
+            background: #45a049;
+        }
+        #unsaved-modal {
+            display: none;
+            position: fixed;
+            top: 50%;
+            left: 50%;
+            transform: translate(-50%, -50%);
+            background: #222;
+            padding: 25px;
+            border: 1px solid #555;
+            border-radius: 8px;
+            z-index: 2000;
+            box-shadow: 0 4px 20px rgba(0,0,0,0.5);
+            min-width: 300px;
+        }
+    </style>
+    <script type="importmap">
+      {
+        "imports": {
+          "three": "https://unpkg.com/three@0.158.0/build/three.module.js",
+          "three/addons/": "https://unpkg.com/three@0.158.0/examples/jsm/",
+          "lil-gui": "https://unpkg.com/lil-gui@0.19.1/dist/lil-gui.esm.min.js"
+        }
+      }
+    </script>
+    <script src="https://cdn.jsdelivr.net/npm/idb-keyval@6/dist/umd.js"></script>
+</head>
+<body>
+    <div id="avatar-container">
+        <div id="canvas-wrapper" style="width: 100%; height: 100%;"></div>
+        <div id="controls-wrapper">
+            <button id="play-pause-btn" title="Play/Pause">▶</button>
+            <input type="range" id="frame-slider" min="0" max="100" value="0">
+        </div>
+    </div>
+
+    <div id="sidebar">
+        <div style="margin-bottom: 15px; border-bottom: 1px solid #444; padding-bottom: 10px;">
+            <span style="font-size: 11px; text-transform: uppercase; color: #888; letter-spacing: 1px;">Active Animation</span>
+            <div id="active-file-display" style="font-size: 18px; font-weight: bold; margin-top: 2px;">
+                Loading...
+            </div>
+        </div>
+        <h2 style="margin-top:0;">Frame <span id="current-frame-display">0</span> / <span id="total-frames-display">0</span></h2>
+        <div style="display:flex; gap: 10px; margin-bottom: 10px;">
+            <button class="btn" id="prev-frame-btn" style="flex:1;">Prev</button>
+            <button class="btn" id="next-frame-btn" style="flex:1;">Next</button>
+        </div>
+        <div style="display:flex; flex-direction:column; gap: 8px; margin-bottom: 20px;">
+            <button class="btn" id="copy-prev-frame-btn" style="background: #007aff; border: none; font-weight: bold; padding: 10px;">Copy Prev Pose</button>
+            <button class="btn" id="copy-prev-to-rest-btn" style="background: #17a2b8; border: none; font-weight: bold; padding: 10px;">Copy Prev Pose to All Successive</button>
+        </div>
+        
+        <h3 style="border-bottom: 1px solid #444; padding-bottom: 10px;">Selected Bone:<br><span id="selected-bone-name" style="color:#4CAF50;">None</span></h3>
+        
+        <div class="control-group" style="border-top: 1px solid #444; padding-top: 12px; margin-bottom: 15px;">
+            <h4 style="margin-top:0;">Camera Focus</h4>
+            <div style="display:flex; gap: 5px;">
+                <button class="btn" id="focus-full" style="flex:1; padding: 5px; font-size: 12px;">Full Body</button>
+                <button class="btn" id="focus-left" style="flex:1; padding: 5px; font-size: 12px;">L Hand</button>
+                <button class="btn" id="focus-right" style="flex:1; padding: 5px; font-size: 12px;">R Hand</button>
+            </div>
+        </div>
+        
+        <div class="control-group">
+            <h4>Rotation (Degrees) <br><small style="font-size:12px; font-weight:normal; color:#aaa;">(Scroll over axis to adjust)</small></h4>
+            <div class="xyz-row" id="rot-x-row">
+                <span>X: <span id="rot-x-val">0</span>&deg;</span>
+                <div>
+                    <button class="adj-btn" id="rot-x-minus" title="Rotate Anti-Clockwise">-</button>
+                    <button class="adj-btn" id="rot-x-plus" title="Rotate Clockwise">+</button>
+                </div>
+            </div>
+            <div class="xyz-row" id="rot-y-row">
+                <span>Y: <span id="rot-y-val">0</span>&deg;</span>
+                <div>
+                    <button class="adj-btn" id="rot-y-minus">-</button>
+                    <button class="adj-btn" id="rot-y-plus">+</button>
+                </div>
+            </div>
+            <div class="xyz-row" id="rot-z-row">
+                <span>Z: <span id="rot-z-val">0</span>&deg;</span>
+                <div>
+                    <button class="adj-btn" id="rot-z-minus">-</button>
+                    <button class="adj-btn" id="rot-z-plus">+</button>
+                </div>
+            </div>
+        </div>
+
+        <div class="control-group" style="border-top: 1px solid #444; padding-top: 12px; margin-top: 10px;">
+            <h4 style="margin-top:0;">Gizmo Controls</h4>
+            <div style="font-size: 12px; color: #bbb; line-height: 1.8;">
+                <div><span style="display:inline-block;width:12px;height:12px;background:#00ff88;border-radius:50%;margin-right:6px;vertical-align:middle;"></span>Hover (green dot)</div>
+                <div><span style="display:inline-block;width:12px;height:12px;background:#ffffff;border-radius:50%;margin-right:6px;vertical-align:middle;"></span>Center Dot (IK Drag)</div>
+                <div style="margin-top:6px;"><span style="display:inline-block;width:16px;height:3px;background:#ff4444;margin-right:6px;vertical-align:middle;"></span>X Ring (Red)</div>
+                <div><span style="display:inline-block;width:16px;height:3px;background:#44ff44;margin-right:6px;vertical-align:middle;"></span>Y Ring (Green)</div>
+                <div><span style="display:inline-block;width:16px;height:3px;background:#4488ff;margin-right:6px;vertical-align:middle;"></span>Z Ring (Blue)</div>
+                <div style="margin-top:8px; color:#888; font-style:italic;">
+                    Click bone → Select bone<br>
+                    Drag inner dot → Move (IK)<br>
+                    Drag outer ring → Rotate
+                </div>
+            </div>
+        </div>
+
+        <button id="save-btn">Save Changes to Disk</button>
+    </div>
+
+    <div id="unsaved-modal">
+        <h3 style="margin-top:0; color:#ff9800;">Unsaved Changes!</h3>
+        <p>You have unsaved tweaks on this frame. Switching frames will lose them. Do you want to save or discard?</p>
+        <div style="display:flex; justify-content:flex-end; gap: 15px; margin-top:20px;">
+            <button class="btn" id="modal-discard" style="background: #f44336;">Discard</button>
+            <button class="btn" id="modal-save" style="background: #4CAF50;">Save</button>
+        </div>
+    </div>
+
+    <script type="module" src="./app.js"></script>
+</body>
+</html>

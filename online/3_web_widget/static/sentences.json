@@ -1,0 +1,602 @@
+[
+ {
+  "topic": "Greetings",
+  "sentence": "Hello, my name is Ravi",
+  "gloss": "HELLO MY NAME RAVI",
+  "fingerspelled": "RAVI"
+ },
+ {
+  "topic": "Greetings",
+  "sentence": "Good morning",
+  "gloss": "MORNING GOOD",
+  "fingerspelled": null
+ },
+ {
+  "topic": "Greetings",
+  "sentence": "Good evening",
+  "gloss": "EVENING GOOD",
+  "fingerspelled": null
+ },
+ {
+  "topic": "Greetings",
+  "sentence": "Good night",
+  "gloss": "NIGHT GOOD",
+  "fingerspelled": null
+ },
+ {
+  "topic": "Greetings",
+  "sentence": "Thank you, I am happy",
+  "gloss": "THANK_YOU I HAPPY",
+  "fingerspelled": null
+ },
+ {
+  "topic": "Greetings",
+  "sentence": "Hello, I am happy to see you",
+  "gloss": "HELLO I HAPPY YOU SEE",
+  "fingerspelled": null
+ },
+ {
+  "topic": "Greetings",
+  "sentence": "Nice to meet you",
+  "gloss": "NICE YOU MEET",
+  "fingerspelled": "NICE"
+ },
+ {
+  "topic": "Greetings",
+  "sentence": "Please sit",
+  "gloss": "PLEASE SIT",
+  "fingerspelled": null
+ },
+ {
+  "topic": "Greetings",
+  "sentence": "Please wait",
+  "gloss": "PLEASE WAIT",
+  "fingerspelled": null
+ },
+ {
+  "topic": "Greetings",
+  "sentence": "Please help me",
+  "gloss": "PLEASE I HELP",
+  "fingerspelled": null
+ },
+ {
+  "topic": "Family",
+  "sentence": "My mother cooks rice every morning",
+  "gloss": "MY MOTHER RICE COOK EVERY MORNING",
+  "fingerspelled": "EVERY"
+ },
+ {
+  "topic": "Family",
+  "sentence": "My younger brother plays cricket",
+  "gloss": "MY YOUNGER_BROTHER CRICKET PLAY",
+  "fingerspelled": "CRICKET"
+ },
+ {
+  "topic": "Family",
+  "sentence": "My younger sister sings",
+  "gloss": "MY YOUNGER_SISTER SING",
+  "fingerspelled": null
+ },
+ {
+  "topic": "Family",
+  "sentence": "I love my family",
+  "gloss": "I MY FAMILY LOVE",
+  "fingerspelled": "LOVE"
+ },
+ {
+  "topic": "Family",
+  "sentence": "The baby is sleeping",
+  "gloss": "BABY SLEEP",
+  "fingerspelled": null
+ },
+ {
+  "topic": "Family",
+  "sentence": "Her husband is a doctor",
+  "gloss": "HER HUSBAND DOCTOR",
+  "fingerspelled": null
+ },
+ {
+  "topic": "Family",
+  "sentence": "His wife is a teacher",
+  "gloss": "HIS WIFE TEACHER",
+  "fingerspelled": null
+ },
+ {
+  "topic": "Family",
+  "sentence": "The child is hungry",
+  "gloss": "CHILD HUNGRY",
+  "fingerspelled": null
+ },
+ {
+  "topic": "Family",
+  "sentence": "My family is big",
+  "gloss": "MY FAMILY BIG",
+  "fingerspelled": null
+ },
+ {
+  "topic": "Family",
+  "sentence": "The girl dances well",
+  "gloss": "GIRL DANCE WELL",
+  "fingerspelled": "WELL"
+ },
+ {
+  "topic": "Family",
+  "sentence": "The boy runs fast",
+  "gloss": "BOY RUN FAST",
+  "fingerspelled": null
+ },
+ {
+  "topic": "Family",
+  "sentence": "My father drinks tea",
+  "gloss": "MY FATHER TEA DRINK",
+  "fingerspelled": null
+ },
+ {
+  "topic": "Food & drink",
+  "sentence": "I drink coffee",
+  "gloss": "I COFFEE DRINK",
+  "fingerspelled": null
+ },
+ {
+  "topic": "Food & drink",
+  "sentence": "I want tea",
+  "gloss": "I TEA WANT",
+  "fingerspelled": null
+ },
+ {
+  "topic": "Food & drink",
+  "sentence": "She drinks milk every morning",
+  "gloss": "SHE MILK DRINK EVERY MORNING",
+  "fingerspelled": "EVERY"
+ },
+ {
+  "topic": "Food & drink",
+  "sentence": "I like mangoes",
+  "gloss": "I MANGO LIKE",
+  "fingerspelled": null
+ },
+ {
+  "topic": "Food & drink",
+  "sentence": "He eats an apple",
+  "gloss": "HE APPLE EAT",
+  "fingerspelled": null
+ },
+ {
+  "topic": "Food & drink",
+  "sentence": "The bread is fresh",
+  "gloss": "BREAD FRESH",
+  "fingerspelled": null
+ },
+ {
+  "topic": "Food & drink",
+  "sentence": "I am hungry",
+  "gloss": "I HUNGRY",
+  "fingerspelled": null
+ },
+ {
+  "topic": "Food & drink",
+  "sentence": "I am thirsty",
+  "gloss": "I THIRSTY",
+  "fingerspelled": null
+ },
+ {
+  "topic": "Food & drink",
+  "sentence": "The tea is hot",
+  "gloss": "TEA HOT",
+  "fingerspelled": null
+ },
+ {
+  "topic": "Food & drink",
+  "sentence": "The milk is cold",
+  "gloss": "MILK COLD",
+  "fingerspelled": null
+ },
+ {
+  "topic": "Food & drink",
+  "sentence": "I do not eat meat",
+  "gloss": "I MEAT EAT NO",
+  "fingerspelled": null
+ },
+ {
+  "topic": "Food & drink",
+  "sentence": "My mother cooks food",
+  "gloss": "MY MOTHER FOOD COOK",
+  "fingerspelled": null
+ },
+ {
+  "topic": "Food & drink",
+  "sentence": "Bananas are sweet",
+  "gloss": "BANANA SWEET",
+  "fingerspelled": null
+ },
+ {
+  "topic": "Food & drink",
+  "sentence": "I want an egg",
+  "gloss": "I EGG WANT",
+  "fingerspelled": null
+ },
+ {
+  "topic": "Feelings",
+  "sentence": "I am happy",
+  "gloss": "I HAPPY",
+  "fingerspelled": null
+ },
+ {
+  "topic": "Feelings",
+  "sentence": "He is angry",
+  "gloss": "HE ANGRY",
+  "fingerspelled": null
+ },
+ {
+  "topic": "Feelings",
+  "sentence": "I am tired",
+  "gloss": "I TIRED",
+  "fingerspelled": null
+ },
+ {
+  "topic": "Feelings",
+  "sentence": "She is excited",
+  "gloss": "SHE EXCITED",
+  "fingerspelled": null
+ },
+ {
+  "topic": "Feelings",
+  "sentence": "I am bored",
+  "gloss": "I BORED",
+  "fingerspelled": null
+ },
+ {
+  "topic": "Feelings",
+  "sentence": "He feels lonely",
+  "gloss": "HE FEEL LONELY",
+  "fingerspelled": "FEEL"
+ },
+ {
+  "topic": "Feelings",
+  "sentence": "She is surprised",
+  "gloss": "SHE SURPRISED",
+  "fingerspelled": null
+ },
+ {
+  "topic": "Feelings",
+  "sentence": "I am confused",
+  "gloss": "I CONFUSED",
+  "fingerspelled": null
+ },
+ {
+  "topic": "Feelings",
+  "sentence": "Do not be afraid",
+  "gloss": "AFRAID NO",
+  "fingerspelled": null
+ },
+ {
+  "topic": "Feelings",
+  "sentence": "Stay calm",
+  "gloss": "STAY CALM",
+  "fingerspelled": "STAY"
+ },
+ {
+  "topic": "Feelings",
+  "sentence": "He is anxious",
+  "gloss": "HE ANXIOUS",
+  "fingerspelled": null
+ },
+ {
+  "topic": "Feelings",
+  "sentence": "Why are you angry?",
+  "gloss": "YOU ANGRY WHY",
+  "fingerspelled": null
+ },
+ {
+  "topic": "School & work",
+  "sentence": "The teacher teaches us",
+  "gloss": "TEACHER WE TEACH",
+  "fingerspelled": null
+ },
+ {
+  "topic": "School & work",
+  "sentence": "The student reads a book",
+  "gloss": "STUDENT BOOK READ",
+  "fingerspelled": null
+ },
+ {
+  "topic": "School & work",
+  "sentence": "I write a letter",
+  "gloss": "I LETTER WRITE",
+  "fingerspelled": "LETTER"
+ },
+ {
+  "topic": "School & work",
+  "sentence": "We study together",
+  "gloss": "WE STUDY TOGETHER",
+  "fingerspelled": null
+ },
+ {
+  "topic": "School & work",
+  "sentence": "I want to learn sign language",
+  "gloss": "I WANT SIGN LANGUAGE LEARN",
+  "fingerspelled": "SIGN"
+ },
+ {
+  "topic": "School & work",
+  "sentence": "He has a new job",
+  "gloss": "HE JOB NEW HAVE",
+  "fingerspelled": null
+ },
+ {
+  "topic": "School & work",
+  "sentence": "I use a computer",
+  "gloss": "I COMPUTER USE",
+  "fingerspelled": "USE"
+ },
+ {
+  "topic": "School & work",
+  "sentence": "Send me an email",
+  "gloss": "I EMAIL SEND",
+  "fingerspelled": null
+ },
+ {
+  "topic": "School & work",
+  "sentence": "I have a question",
+  "gloss": "I QUESTION HAVE",
+  "fingerspelled": null
+ },
+ {
+  "topic": "School & work",
+  "sentence": "The class starts now",
+  "gloss": "CLASS START NOW",
+  "fingerspelled": null
+ },
+ {
+  "topic": "School & work",
+  "sentence": "The teacher answers my question",
+  "gloss": "TEACHER MY QUESTION ANSWER",
+  "fingerspelled": null
+ },
+ {
+  "topic": "School & work",
+  "sentence": "I work every day",
+  "gloss": "I WORK EVERY DAY",
+  "fingerspelled": "EVERY"
+ },
+ {
+  "topic": "Places & travel",
+  "sentence": "I am going home",
+  "gloss": "I GO HOME",
+  "fingerspelled": null
+ },
+ {
+  "topic": "Places & travel",
+  "sentence": "The city is big",
+  "gloss": "CITY BIG",
+  "fingerspelled": null
+ },
+ {
+  "topic": "Places & travel",
+  "sentence": "I like the beach",
+  "gloss": "I BEACH LIKE",
+  "fingerspelled": null
+ },
+ {
+  "topic": "Places & travel",
+  "sentence": "We visit the temple",
+  "gloss": "WE TEMPLE VISIT",
+  "fingerspelled": null
+ },
+ {
+  "topic": "Places & travel",
+  "sentence": "The forest is dark",
+  "gloss": "FOREST DARK",
+  "fingerspelled": null
+ },
+ {
+  "topic": "Places & travel",
+  "sentence": "They climb the mountain",
+  "gloss": "THEY MOUNTAIN CLIMB",
+  "fingerspelled": null
+ },
+ {
+  "topic": "Places & travel",
+  "sentence": "He drives a car",
+  "gloss": "HE CAR DRIVE",
+  "fingerspelled": null
+ },
+ {
+  "topic": "Places & travel",
+  "sentence": "The hotel is near",
+  "gloss": "HOTEL NEAR",
+  "fingerspelled": null
+ },
+ {
+  "topic": "Places & travel",
+  "sentence": "The road is long",
+  "gloss": "ROAD LONG",
+  "fingerspelled": "LONG"
+ },
+ {
+  "topic": "Places & travel",
+  "sentence": "I love India",
+  "gloss": "I INDIA LOVE",
+  "fingerspelled": "LOVE"
+ },
+ {
+  "topic": "Places & travel",
+  "sentence": "The lake is beautiful",
+  "gloss": "LAKE BEAUTIFUL",
+  "fingerspelled": null
+ },
+ {
+  "topic": "Places & travel",
+  "sentence": "The hospital is near",
+  "gloss": "HOSPITAL NEAR",
+  "fingerspelled": null
+ },
+ {
+  "topic": "Time & weather",
+  "sentence": "The sun is hot",
+  "gloss": "SUN HOT",
+  "fingerspelled": null
+ },
+ {
+  "topic": "Time & weather",
+  "sentence": "The wind is strong",
+  "gloss": "WIND STRONG",
+  "fingerspelled": null
+ },
+ {
+  "topic": "Time & weather",
+  "sentence": "I will come tomorrow",
+  "gloss": "I COME TOMORROW",
+  "fingerspelled": null
+ },
+ {
+  "topic": "Time & weather",
+  "sentence": "I saw him yesterday",
+  "gloss": "I HE SEE YESTERDAY",
+  "fingerspelled": null
+ },
+ {
+  "topic": "Time & weather",
+  "sentence": "Come now",
+  "gloss": "COME NOW",
+  "fingerspelled": null
+ },
+ {
+  "topic": "Time & weather",
+  "sentence": "See you tomorrow",
+  "gloss": "YOU TOMORROW SEE",
+  "fingerspelled": null
+ },
+ {
+  "topic": "Time & weather",
+  "sentence": "The sky is blue",
+  "gloss": "SKY BLUE",
+  "fingerspelled": null
+ },
+ {
+  "topic": "Time & weather",
+  "sentence": "The rain is heavy",
+  "gloss": "RAIN HEAVY",
+  "fingerspelled": null
+ },
+ {
+  "topic": "Time & weather",
+  "sentence": "Today is cold",
+  "gloss": "TODAY COLD",
+  "fingerspelled": null
+ },
+ {
+  "topic": "Time & weather",
+  "sentence": "Tomorrow is a holiday",
+  "gloss": "TOMORROW HOLIDAY",
+  "fingerspelled": null
+ },
+ {
+  "topic": "Questions",
+  "sentence": "What is your name?",
+  "gloss": "YOUR NAME WHAT",
+  "fingerspelled": null
+ },
+ {
+  "topic": "Questions",
+  "sentence": "Where do you live?",
+  "gloss": "YOU LIVE WHERE",
+  "fingerspelled": null
+ },
+ {
+  "topic": "Questions",
+  "sentence": "Who is your friend?",
+  "gloss": "YOUR FRIEND WHO",
+  "fingerspelled": null
+ },
+ {
+  "topic": "Questions",
+  "sentence": "Why are you late?",
+  "gloss": "YOU LATE WHY",
+  "fingerspelled": null
+ },
+ {
+  "topic": "Questions",
+  "sentence": "When will you come?",
+  "gloss": "YOU COME WHEN",
+  "fingerspelled": null
+ },
+ {
+  "topic": "Questions",
+  "sentence": "How many brothers do you have?",
+  "gloss": "BROTHER YOU HAVE HOW_MANY",
+  "fingerspelled": "BROTHER"
+ },
+ {
+  "topic": "Questions",
+  "sentence": "Where is the hospital?",
+  "gloss": "HOSPITAL WHERE",
+  "fingerspelled": null
+ },
+ {
+  "topic": "Questions",
+  "sentence": "What do you want?",
+  "gloss": "YOU WANT WHAT",
+  "fingerspelled": null
+ },
+ {
+  "topic": "Questions",
+  "sentence": "Who is your teacher?",
+  "gloss": "YOUR TEACHER WHO",
+  "fingerspelled": null
+ },
+ {
+  "topic": "Questions",
+  "sentence": "Where are you going?",
+  "gloss": "YOU GO WHERE",
+  "fingerspelled": null
+ },
+ {
+  "topic": "Health",
+  "sentence": "I am sick",
+  "gloss": "I SICK",
+  "fingerspelled": null
+ },
+ {
+  "topic": "Health",
+  "sentence": "I need a doctor",
+  "gloss": "I DOCTOR NEED",
+  "fingerspelled": "NEED"
+ },
+ {
+  "topic": "Health",
+  "sentence": "Call the doctor",
+  "gloss": "DOCTOR CALL",
+  "fingerspelled": null
+ },
+ {
+  "topic": "Health",
+  "sentence": "My head hurts",
+  "gloss": "MY HEAD HURT",
+  "fingerspelled": "HURT"
+ },
+ {
+  "topic": "Health",
+  "sentence": "Take rest",
+  "gloss": "REST TAKE",
+  "fingerspelled": null
+ },
+ {
+  "topic": "Health",
+  "sentence": "Sleep early",
+  "gloss": "SLEEP EARLY",
+  "fingerspelled": null
+ },
+ {
+  "topic": "Health",
+  "sentence": "Health is wealth",
+  "gloss": "HEALTH WEALTH",
+  "fingerspelled": "WEALTH"
+ },
+ {
+  "topic": "Health",
+  "sentence": "The doctor helps the patient",
+  "gloss": "DOCTOR PATIENT HELP",
+  "fingerspelled": null
+ }
+]
