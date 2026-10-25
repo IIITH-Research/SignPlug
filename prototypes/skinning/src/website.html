@@ -1,0 +1,1594 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>ISL 3D Avatar Translation Platform</title>
+    <style>
+        :root {
+            --bg-color: #0b0b0c;
+            --accent-color: #00adb5;
+            --accent-light: #00f0f8;
+            --card-bg: rgba(20, 20, 22, 0.6);
+            --border-color: rgba(255, 255, 255, 0.08);
+            --text-color: #e0e0e6;
+            --text-muted: #8e8e93;
+        }
+
+        body { 
+            margin: 0; 
+            padding: 0;
+            font-family: 'Outfit', 'Segoe UI', system-ui, sans-serif;
+            background-color: var(--bg-color); 
+            color: var(--text-color);
+            line-height: 1.7;
+            overflow-x: hidden;
+        }
+
+        /* --- Header & Nav --- */
+        header {
+            border-bottom: 1px solid var(--border-color);
+            background: rgba(11, 11, 12, 0.8);
+            backdrop-filter: blur(12px);
+            position: sticky;
+            top: 0;
+            z-index: 100;
+        }
+        
+        .nav-container {
+            max-width: 1200px;
+            margin: 0 auto;
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            padding: 15px 25px;
+        }
+
+        .logo {
+            font-size: 1.25rem;
+            font-weight: 700;
+            color: #ffffff;
+            display: flex;
+            align-items: center;
+            gap: 8px;
+            text-decoration: none;
+        }
+
+        .logo span {
+            color: var(--accent-color);
+        }
+
+        nav a {
+            color: var(--text-muted);
+            text-decoration: none;
+            font-size: 0.95rem;
+            margin-left: 20px;                
+            transition: color 0.2s;
+        }
+
+        nav a:hover {
+            color: var(--accent-light);
+        }
+
+        nav a.active {
+            color: var(--accent-color) !important;
+            font-weight: 700;
+            border-bottom: 2px solid var(--accent-color);
+            padding-bottom: 4px;
+        }
+
+        /* --- Layout --- */
+        .container {
+            max-width: 1200px;
+            margin: 0 auto;
+            padding: 40px 25px 80px 25px;
+        }
+                             
+        .hero-section {
+            text-align: center;
+            margin-bottom: 60px;
+        }
+
+        .hero-section h1 {
+            font-size: 2.8rem;
+            font-weight: 800;
+            background: linear-gradient(135deg, #ffffff, #888888);
+            -webkit-background-clip: text;
+            -webkit-text-fill-color: transparent;
+            margin-bottom: 15px;
+        }
+
+        .hero-section p {
+            font-size: 1.2rem;
+            color: var(--text-muted);
+            max-width: 800px;
+            margin: 0 auto;
+        }
+
+        .grid {
+            display: grid;
+            grid-template-columns: 2fr 1fr;
+            gap: 40px;
+        }
+
+        @media (max-width: 900px) {
+            .grid {
+                grid-template-columns: 1fr;
+            }
+            .hero-section h1 {
+                font-size: 2rem;
+            }
+        }
+
+        /* --- Article Card --- */
+        .card {
+            background: var(--card-bg);
+            border: 1px solid var(--border-color);
+            border-radius: 16px;
+            padding: 30px;
+            box-sizing: border-box;
+            backdrop-filter: blur(10px);
+            margin-bottom: 30px;
+            box-shadow: 0 10px 30px rgba(0,0,0,0.3);
+        }
+
+        .card h2 {
+            font-size: 1.5rem;
+            margin-top: 0;
+            margin-bottom: 20px;
+            border-bottom: 1px solid var(--border-color);
+            padding-bottom: 10px;
+            color: #ffffff;
+        }
+
+        /* --- Video & Image Mockups --- */
+        .video-mockup {
+            width: 100%;
+            height: 360px;
+            background: linear-gradient(135deg, #1c1c1f, #2a2a2e);
+            border-radius: 12px;
+            margin: 20px 0;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            justify-content: center;
+            position: relative;
+            border: 1px solid var(--border-color);
+            overflow: hidden;
+        }
+
+        .video-play-btn {
+            width: 70px;
+            height: 70px;
+            border-radius: 50%;
+            background: rgba(0, 173, 181, 0.9);
+            border: none;
+            color: #121212;
+            font-size: 28px;
+            cursor: pointer;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            box-shadow: 0 4px 15px rgba(0, 173, 181, 0.4);
+            transition: transform 0.2s, background-color 0.2s;
+            z-index: 2;
+        }
+
+        .video-play-btn:hover {
+            transform: scale(1.1);
+            background: var(--accent-light);
+        }
+
+        .image-mockup {
+            width: 100%;
+            height: 200px;
+            background: linear-gradient(135deg, #121214, #1c1c1f);
+            border-radius: 12px;
+            margin: 20px 0;
+            border: 1px solid var(--border-color);
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            color: var(--text-muted);
+            font-size: 0.9rem;
+        }
+
+        /* --- Translatable Sentences --- */
+        .translatable-sentence {
+            position: relative;
+            cursor: pointer;
+            transition: background-color 0.2s, border-bottom 0.2s;
+            border-bottom: 1px dashed rgba(0, 173, 181, 0.4);
+            border-radius: 2px;
+        }
+
+        .translatable-sentence:hover {
+            background-color: rgba(0, 173, 181, 0.08);
+            border-bottom-color: var(--accent-light);
+        }
+
+        .translatable-sentence sup {
+            color: var(--accent-color);
+            font-weight: bold;
+            font-size: 0.8rem;
+            margin-left: 2px;
+        }
+
+        /* --- Translate Tooltip --- */
+        #translate-tooltip {
+            position: absolute;
+            display: none;
+            background: linear-gradient(135deg, var(--accent-color), var(--accent-light));
+            color: #0b0b0c;
+            padding: 8px 16px;
+            border-radius: 20px;
+            font-size: 0.9rem;
+            font-weight: bold;
+            cursor: pointer;
+            box-shadow: 0 8px 24px rgba(0, 173, 181, 0.4);
+            transform: translate(-50%, -120%);
+            z-index: 2000;
+            user-select: none;
+            border: none;
+            transition: transform 0.1s;
+        }
+
+        #translate-tooltip:hover {
+            transform: translate(-50%, -125%) scale(1.05);
+        }
+
+        ::selection {
+            background-color: rgba(0, 173, 181, 0.25);
+            color: inherit;
+        }
+
+        /* --- Floating Widget --- */
+        #avatar-container {
+            position: fixed;
+            bottom: 25px;
+            right: 25px;
+            width: 320px;
+            height: 90px;
+            border-radius: 24px;
+            overflow: hidden;
+            background: rgba(18, 18, 18, 0.9);
+            backdrop-filter: blur(15px);
+            -webkit-backdrop-filter: blur(15px);
+            box-shadow: 0 12px 40px rgba(0,0,0,0.6);
+            border: 1px solid rgba(255, 255, 255, 0.1);
+            z-index: 1000;
+            display: flex;
+            flex-direction: row;
+            align-items: center;
+            justify-content: space-between;
+            padding: 12px 15px;
+            box-sizing: border-box;
+            gap: 12px;
+            transition: width 0.4s cubic-bezier(0.16, 1, 0.3, 1), 
+                        height 0.4s cubic-bezier(0.16, 1, 0.3, 1), 
+                        left 0.4s cubic-bezier(0.16, 1, 0.3, 1), 
+                        top 0.4s cubic-bezier(0.16, 1, 0.3, 1),
+                        border-radius 0.4s cubic-bezier(0.16, 1, 0.3, 1),
+                        padding 0.4s cubic-bezier(0.16, 1, 0.3, 1);
+        }
+
+        #drag-handle {
+            display: none; /* Hidden when minimized */
+            height: 36px;
+            background: rgba(255,255,255,0.03);
+            border-bottom: 1px solid rgba(255,255,255,0.05);
+            cursor: grab;
+            align-items: center;
+            justify-content: space-between;
+            padding: 0 15px;
+            color: var(--text-muted);
+            font-size: 0.8rem;
+            user-select: none;
+            width: 100%;
+            box-sizing: border-box;
+        }
+
+        #drag-handle:active {
+            cursor: grabbing;
+        }
+
+        #canvas-wrapper {
+            width: 60px;
+            height: 60px;
+            border-radius: 50%;
+            overflow: hidden;
+            border: 2px solid var(--accent-color);
+            flex-shrink: 0;
+            transition: all 0.4s cubic-bezier(0.16, 1, 0.3, 1);
+            position: relative;
+        }
+
+        #resize-handle {
+            position: absolute;
+            top: 0;
+            left: 0;
+            width: 20px;
+            height: 20px;
+            cursor: nwse-resize;
+            z-index: 1002;
+            display: none; /* Hidden when minimized */
+        }
+
+        #controls-wrapper {
+            display: none; /* Hidden when minimized */
+            position: absolute;
+            bottom: 0;
+            left: 0;
+            right: 0;
+            background: rgba(18, 18, 18, 0.85);
+            backdrop-filter: blur(10px);
+            padding: 10px 15px;
+            z-index: 1005;
+            align-items: center;
+            gap: 12px;
+            border-top: 1px solid rgba(255, 255, 255, 0.05);
+            box-sizing: border-box;
+        }
+
+        #launch-container {
+            display: flex;
+            flex-grow: 1;
+            align-items: center;
+            justify-content: center;
+            transition: opacity 0.3s ease;
+        }
+
+        #launch-play-btn {
+            background: var(--accent-color);
+            border: none;
+            color: #121212;
+            padding: 10px 14px;
+            border-radius: 12px;
+            font-weight: 700;
+            cursor: pointer;
+            display: flex;
+            align-items: center;
+            gap: 6px;
+            font-size: 0.85rem;
+            box-shadow: 0 4px 15px rgba(0, 173, 181, 0.3);
+            transition: transform 0.2s, background-color 0.2s;
+            width: 100%;
+            justify-content: center;
+            white-space: nowrap;
+        }
+
+        #launch-play-btn:hover {
+            transform: scale(1.03);
+            background: var(--accent-light);
+        }
+
+        /* --- Expanded State --- */
+        #avatar-container.expanded {
+            width: 320px;
+            height: 420px;
+            flex-direction: column;
+            align-items: stretch;
+            justify-content: flex-start;
+            padding: 0;
+            gap: 0;
+            border-radius: 24px;
+            resize: both; /* Allow manual resizing */
+        }
+
+        #avatar-container.expanded #drag-handle {
+            display: flex;
+        }
+
+        #avatar-container.expanded #canvas-wrapper {
+            width: 100%;
+            height: 100%;
+            border-radius: 0;
+            border: none;
+            flex-grow: 1;
+        }
+
+        #avatar-container.expanded #controls-wrapper {
+            display: flex;
+        }
+
+        #avatar-container.expanded #launch-container {
+            display: none;
+        }
+
+        #avatar-container.expanded #resize-handle {
+            display: block;
+        }
+
+        #play-pause-btn {
+            background: none;
+            border: none;
+            color: #ffffff;
+            cursor: pointer;
+            font-size: 18px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            width: 32px;
+            height: 32px;
+            border-radius: 50%;
+            transition: background-color 0.2s;
+        }
+
+        #play-pause-btn:hover {
+            background: rgba(255, 255, 255, 0.08);
+        }
+
+        #frame-slider {
+            flex-grow: 1;
+            cursor: pointer;
+            height: 4px;
+            -webkit-appearance: none;
+            background: rgba(255, 255, 255, 0.2);
+            border-radius: 2px;
+            outline: none;
+        }
+
+        #frame-slider::-webkit-slider-thumb {
+            -webkit-appearance: none;
+            appearance: none;
+            width: 14px;
+            height: 14px;
+            border-radius: 50%;
+            background: var(--accent-color);
+            cursor: pointer;
+            box-shadow: 0 0 5px rgba(0, 173, 181, 0.4);
+        }
+
+        #fullscreen-btn {
+            background: none;
+            border: none;
+            color: var(--text-muted);
+            cursor: pointer;
+            font-size: 14px;
+            padding: 4px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            transition: color 0.2s;
+        }
+
+        #fullscreen-btn:hover {
+            color: #ffffff;
+        }
+
+        #avatar-container.fullscreen {
+            width: 100vw !important;
+            height: 100vh !important;
+            max-width: 100vw !important;
+            max-height: 100vh !important;
+            top: 0 !important;
+            left: 0 !important;
+            bottom: 0 !important;
+            right: 0 !important;
+            border-radius: 0;
+            border: none;
+            z-index: 9999;
+            resize: none;
+        }
+
+        #avatar-container.fullscreen #drag-handle {
+            display: none;
+        }
+
+        /* --- 3D Dataset Tab Layout --- */
+        #dataset-tab-content {
+            display: none;
+            height: calc(100vh - 70px);
+            width: 100vw;
+            margin: 0;
+            padding: 0;
+            overflow: hidden;
+            background-color: #121212;
+            color: #ffffff;
+            font-family: system-ui, -apple-system, sans-serif;
+            position: absolute;
+            top: 70px;
+            left: 0;
+            z-index: 10;
+        }
+
+        #left-sidebar {
+            width: 320px;
+            background: #1a1a1a;
+            border-right: 1px solid #2d2d2d;
+            box-sizing: border-box;
+            padding: 25px;
+            display: flex;
+            flex-direction: column;
+            overflow-y: auto;
+            flex-shrink: 0;
+            height: 100%;
+            user-select: none;
+        }
+        
+        #left-sidebar::-webkit-scrollbar {
+            width: 6px;
+        }
+        
+        #left-sidebar::-webkit-scrollbar-track {
+            background: #1a1a1a;
+        }
+        
+        #left-sidebar::-webkit-scrollbar-thumb {
+            background: #3d3d3d;
+            border-radius: 3px;
+        }
+        
+        #left-sidebar::-webkit-scrollbar-thumb:hover {
+            background: #555555;
+        }
+
+        .sentence-item {
+            background: #252525;
+            border: 1px solid #333;
+            border-radius: 12px;
+            padding: 14px 18px;
+            margin-bottom: 12px;
+            cursor: pointer;
+            transition: all 0.25s cubic-bezier(0.16, 1, 0.3, 1);
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            gap: 15px;
+            box-shadow: 0 4px 6px rgba(0,0,0,0.15);
+        }
+        
+        .sentence-item:hover {
+            background: #2d2d2d;
+            border-color: #00adb5;
+            transform: translateY(-2px);
+            box-shadow: 0 6px 12px rgba(0, 173, 181, 0.15);
+        }
+        
+        .sentence-item.active {
+            background: rgba(0, 173, 181, 0.12);
+            border-color: #00adb5;
+            box-shadow: 0 0 15px rgba(0, 173, 181, 0.2);
+        }
+        
+        .sentence-name {
+            font-size: 0.95rem;
+            font-weight: 555;
+            color: #e0e0e0;
+            word-break: break-word;
+            flex-grow: 1;
+            text-align: left;
+        }
+        
+        .sentence-item.active .sentence-name {
+            color: #00adb5;
+            font-weight: 600;
+        }
+        
+        .sentence-play-btn {
+            background: #00adb5;
+            border: none;
+            color: #121212;
+            width: 32px;
+            height: 32px;
+            border-radius: 50%;
+            cursor: pointer;
+            font-weight: bold;
+            font-size: 0.85rem;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            transition: all 0.2s ease;
+            flex-shrink: 0;
+            box-shadow: 0 2px 6px rgba(0, 173, 181, 0.4);
+        }
+
+        .sentence-play-btn:hover {
+            transform: scale(1.1);
+            background: #00f0f8;
+            box-shadow: 0 4px 12px rgba(0, 173, 181, 0.6);
+        }
+
+        #dataset-avatar-container {
+            flex-grow: 1;
+            position: relative;
+            background: radial-gradient(circle at center, #1b262c 0%, #0f172a 100%);
+            display: flex;
+            flex-direction: column;
+            overflow: hidden;
+            height: 100%;
+        }
+
+        #dataset-canvas-wrapper {
+            width: 100%;
+            height: 100%;
+        }
+
+        #dataset-slider-container {
+            position: absolute;
+            bottom: 30px;
+            left: 5%;
+            right: 5%;
+            background: rgba(18, 18, 18, 0.85);
+            backdrop-filter: blur(10px);
+            -webkit-backdrop-filter: blur(10px);
+            border: 1px solid rgba(255, 255, 255, 0.1);
+            border-radius: 12px;
+            padding: 10px 20px;
+            z-index: 5;
+            box-shadow: 0 6px 20px rgba(0,0,0,0.5);
+            display: flex;
+            align-items: center;
+        }
+
+        #timeline-slider {
+            width: 100%;
+            cursor: pointer;
+            height: 6px;
+            -webkit-appearance: none;
+            background: rgba(255, 255, 255, 0.2);
+            border-radius: 3px;
+            outline: none;
+            transition: background 0.3s;
+        }
+        
+        #timeline-slider::-webkit-slider-runnable-track {
+            width: 100%;
+            height: 6px;
+            border-radius: 3px;
+        }
+        
+        #timeline-slider::-webkit-slider-thumb {
+            -webkit-appearance: none;
+            appearance: none;
+            width: 18px;
+            height: 18px;
+            border-radius: 50%;
+            background: #00adb5;
+            cursor: pointer;
+            margin-top: -6px;
+            box-shadow: 0 0 10px rgba(0, 173, 181, 0.5);
+            transition: transform 0.1s, background-color 0.2s;
+        }
+        
+        #timeline-slider::-webkit-slider-thumb:hover {
+            transform: scale(1.2);
+            background: #00f0f8;
+        }
+
+        #dataset-english-overlay, #dataset-gloss-overlay {
+            position: absolute;
+            top: 45%;
+            transform: translateY(-50%);
+            background: rgba(18, 18, 18, 0.85);
+            backdrop-filter: blur(12px);
+            -webkit-backdrop-filter: blur(12px);
+            border: 1px solid rgba(255, 255, 255, 0.1);
+            border-radius: 14px;
+            padding: 18px 22px;
+            width: 280px;
+            box-sizing: border-box;
+            z-index: 5;
+            opacity: 0;
+            pointer-events: none;
+            transition: opacity 0.35s cubic-bezier(0.16, 1, 0.3, 1), transform 0.35s cubic-bezier(0.16, 1, 0.3, 1);
+            box-shadow: 0 12px 36px rgba(0,0,0,0.5);
+        }
+        
+        #dataset-english-overlay {
+            left: 30px;
+            transform: translateY(-50%) translateX(-20px);
+        }
+        
+        #dataset-gloss-overlay {
+            right: 30px;
+            transform: translateY(-50%) translateX(20px);
+        }
+        
+        #dataset-english-overlay.visible {
+            opacity: 1;
+            transform: translateY(-50%) translateX(0);
+        }
+        
+        #dataset-gloss-overlay.visible {
+            opacity: 1;
+            transform: translateY(-50%) translateX(0);
+        }
+    </style>
+    <script type="importmap">
+      {
+        "imports": {
+          "three": "https://unpkg.com/three@0.158.0/build/three.module.js",
+          "three/addons/": "https://unpkg.com/three@0.158.0/examples/jsm/",
+          "lil-gui": "https://unpkg.com/lil-gui@0.19.1/dist/lil-gui.esm.min.js"
+        }
+      }
+    </script>
+    <script src="https://cdn.jsdelivr.net/npm/idb-keyval@6/dist/umd.js"></script>
+</head>
+<body>
+    <div id="translate-tooltip">✨ Translate</div>
+
+    <header>
+        <div class="nav-container">
+            <a href="#" class="logo">ISL<span>Avatar</span></a>
+            <nav>
+                <a href="#overview" class="nav-link active" data-tab="website">Overview</a>
+                <a href="#demo" class="nav-link" data-tab="website">Video Demo</a>
+                <a href="#database" class="nav-link" data-tab="website">Database</a>
+                <a href="#dataset" class="nav-link" data-tab="dataset">3D Dataset</a>
+            </nav>
+        </div>
+    </header>
+
+    <div id="website-root">
+        <div class="container">
+        <div class="hero-section">
+            <h1>ISL 3D Avatar Translation Center</h1>
+            <p>Select any numbered sentence in the article text below to immediately translate and view the corresponding animation in our skeletal avatar widget.</p>
+        </div>
+
+        <div class="grid">
+            <!-- Main Content -->
+            <div>
+                <section class="card" id="overview">
+                    <h2>Project Overview</h2>
+                    <p>
+                        <span class="translatable-sentence" data-idx="0">Welcome to the Indian Sign Language (ISL) avatar research database presentation page<sup>1</sup></span>.
+                        Lorem ipsum dolor sit amet, consectetur adipiscing elit. Sed do eiusmod tempor incididunt ut labore et dolore magna aliqua. 
+                        <span class="translatable-sentence" data-idx="1">Our research introduces a next-generation 3D avatar that processes manual annotations<sup>2</sup></span>.
+                        Aenean euismod elementum nisi quis eleifend quam. 
+                        <span class="translatable-sentence" data-idx="2">It maps skeletal landmarks directly to standard bone configurations<sup>3</sup></span>.
+                        <span class="translatable-sentence" data-idx="3">We implement smooth keyframe transitions to ensure high-fidelity gestures<sup>4</sup></span>.
+                        Donec pretium vulputate sapien nec sagittis aliquam malesuada.
+                    </p>
+                    
+                    <p>
+                        <span class="translatable-sentence" data-idx="4">This platform translates raw landmarks into clean bone coordinates<sup>5</sup></span>.
+                        Nullam varius, turpis et commodo pharetra, est eros bibendum elit, nec luctus magna felis sollicitudin mauris.
+                        <span class="translatable-sentence" data-idx="5">The system resolves skeletal rotations using Three.js matrices<sup>6</sup></span>.
+                        <span class="translatable-sentence" data-idx="6">This represents a major leap in accessibility technologies<sup>7</sup></span>.
+                        In hac habitasse platea dictumst.
+                    </p>
+                </section>
+
+                <section class="card" id="demo">
+                    <h2>Video Demonstration</h2>
+                    <p>
+                        <span class="translatable-sentence" data-idx="7">Watch the live video overview showcasing the avatar pipeline in action<sup>8</sup></span>.
+                        Duis aute irure dolor in reprehenderit in voluptate velit esse cillum dolore eu fugiat nulla pariatur.
+                        <span class="translatable-sentence" data-idx="8">We have processed multiple Indian Sign Language sentences for validation<sup>9</sup></span>.
+                    </p>
+                    
+                    <div class="video-mockup">
+                        <button class="video-play-btn">▶</button>
+                        <div style="margin-top: 15px; color: var(--text-muted); font-size: 0.95rem; font-family: monospace;">demo_video_playback.mp4</div>
+                    </div>
+
+                    <p>
+                        <span class="translatable-sentence" data-idx="9">We aim to bridge communication barriers for deaf communities<sup>10</sup></span>.
+                        <span class="translatable-sentence" data-idx="10">This framework allows real-time sign interpolation on low-end hardware<sup>11</sup></span>.
+                        <span class="translatable-sentence" data-idx="11">The client browser compiles the translation sequence dynamically<sup>12</sup></span>.
+                        <span class="translatable-sentence" data-idx="12">This eliminates heavy server video rendering overheads<sup>13</sup></span>.
+                    </p>
+                </section>
+
+                <section class="card" id="database">
+                    <h2>Dataset Documentation</h2>
+                    <p>
+                        <span class="translatable-sentence" data-idx="13">The dataset contains individual words and complex sentences<sup>14</sup></span>.
+                        Curabitur pretium lacus.
+                        <span class="translatable-sentence" data-idx="14">Each annotation file is stored in standard JSON formatting<sup>15</sup></span>.
+                        <span class="translatable-sentence" data-idx="15">The animations are divided into raw coordinates and smoothed data<sup>16</sup></span>.
+                        <span class="translatable-sentence" data-idx="16">Keyframes are isolated for manual correction and tweaks<sup>17</sup></span>.
+                    </p>
+
+                    <div class="image-mockup">
+                        📊 Dataset distribution and skeleton bone tree mapping diagram
+                    </div>
+
+                    <p>
+                        <span class="translatable-sentence" data-idx="17">Users can scrub through the animations to verify joint limits<sup>18</sup></span>.
+                        <span class="translatable-sentence" data-idx="18">The arm joints are solved dynamically using CCD-IK solvers<sup>19</sup></span>.
+                        <span class="translatable-sentence" data-idx="19">Fingers rotate along local axes to prevent visual collisions<sup>20</sup></span>.
+                        <span class="translatable-sentence" data-idx="20">We support standard 3D file formats like GLTF and FBX<sup>21</sup></span>.
+                        <span class="translatable-sentence" data-idx="21">The system scales the mesh according to height inputs<sup>22</sup></span>.
+                    </p>
+
+                    <p>
+                        <span class="translatable-sentence" data-idx="22">We invite developers to extend this open-source skeleton architecture<sup>23</sup></span>.
+                        <span class="translatable-sentence" data-idx="23">Future models will integrate neural network facial features<sup>24</sup></span>.
+                        <span class="translatable-sentence" data-idx="24">This represents our ongoing commitment to digital accessibility research<sup>25</sup></span>.
+                    </p>
+                </section>
+
+                <section class="card">
+                    <h2>Advanced Technical Studies</h2>
+                    <p>
+                        <span class="translatable-sentence" data-idx="25">We analyze joint velocity and smoothing filters in detail<sup>26</sup></span>.
+                        <span class="translatable-sentence" data-idx="26">Our pipeline processes landmarks at 30 frames per second<sup>27</sup></span>.
+                        <span class="translatable-sentence" data-idx="27">The pipeline consists of extraction, smoothing, and conversion<sup>28</sup></span>.
+                        <span class="translatable-sentence" data-idx="28">We ignore noise using advanced low-pass butterworth filters<sup>29</sup></span>.
+                        <span class="translatable-sentence" data-idx="29">This creates a stable skeletal base for sign generation<sup>30</sup></span>.
+                    </p>
+
+                    <p>
+                        <span class="translatable-sentence" data-idx="30">Each sign has been verified by sign language educators<sup>31</sup></span>.
+                        <span class="translatable-sentence" data-idx="31">The results demonstrate a 94% accuracy score in comprehension<sup>32</sup></span>.
+                        <span class="translatable-sentence" data-idx="32">This research opens up new directions in automated virtual avatars<sup>33</sup></span>.
+                        <span class="translatable-sentence" data-idx="33">We thank our collaborators for making this database possible<sup>34</sup></span>.
+                        <span class="translatable-sentence" data-idx="34">Select this final sentence to see the system play sentence thirty-five<sup>35</sup></span>.
+                    </p>
+                </section>
+            </div>
+
+            <!-- Right Column Info Card -->
+            <div>
+                <div class="card" style="position: sticky; top: 90px;">
+                    <h2>Quick Guidelines</h2>
+                    <ul style="padding-left: 20px; font-size: 0.95rem; color: var(--text-muted);">
+                        <li style="margin-bottom: 12px;">Double-click or drag-select any of the **dashed underlined sentences** on the left.</li>
+                        <li style="margin-bottom: 12px;">Click the floating **"✨ Translate"** button that pops up above your selection.</li>
+                        <li style="margin-bottom: 12px;">The 3D Avatar widget in the bottom-right corner will automatically load and play the sign translation!</li>
+                        <li style="margin-bottom: 12px;">Use the play/pause button and slider in the avatar window to scrub through details.</li>
+                    </ul>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Avatar Widget Container -->
+    <div id="avatar-container">
+        <div id="resize-handle" title="Drag to resize"></div>
+        <div id="drag-handle" title="Drag to move">
+            <span>👤 3D Avatar Widget</span>
+            <button id="minimize-btn" title="Minimize to Logo" style="background:none; border:none; color:var(--text-muted); cursor:pointer; font-size:16px; padding:4px; display:flex; align-items:center; justify-content:center; transition:color 0.2s;">🗕</button>
+        </div>
+        <div id="canvas-wrapper"></div>
+        <div id="launch-container">
+            <button id="launch-play-btn">▶ Play Animation</button>
+        </div>
+        <div id="controls-wrapper">
+            <button id="play-pause-btn" title="Play/Pause">⏸</button>
+            <input type="range" id="frame-slider" min="0" max="100" value="0">
+            <button id="fullscreen-btn" title="Toggle Fullscreen">⛶</button>
+        </div>
+    </div>
+    </div> <!-- End of website-root -->
+
+    <!-- 3D Dataset Tab Content (Same layout as sentences.html) -->
+    <div id="dataset-tab-content">
+        <div id="left-sidebar">
+            <h2 style="margin-top: 0; border-bottom: 1px solid #2d2d2d; padding-bottom: 18px; font-size: 1.4rem; color: #00adb5; display: flex; align-items: center; gap: 10px; font-family: system-ui;">
+                <span>🎬 ISL 3D Avatar Dataset</span>
+            </h2>
+            
+            <h3 style="font-size: 1.05rem; color: #00adb5; margin: 20px 0 10px 0; border-bottom: 1px solid #333; padding-bottom: 6px; letter-spacing: 0.5px; text-transform: uppercase;">Sentences</h3>
+            <div id="sentences-list">
+                <!-- Loaded dynamically -->
+            </div>
+
+            <h3 style="font-size: 1.05rem; color: #00adb5; margin: 30px 0 10px 0; border-bottom: 1px solid #333; padding-bottom: 6px; letter-spacing: 0.5px; text-transform: uppercase;">Words</h3>
+            <div id="words-list">
+                <!-- Loaded dynamically -->
+            </div>
+
+            <h3 style="font-size: 1.05rem; color: #00adb5; margin: 30px 0 10px 0; border-bottom: 1px solid #333; padding-bottom: 6px; letter-spacing: 0.5px; text-transform: uppercase;">Reference Videos</h3>
+            <div id="videos-list">
+                <!-- Loaded dynamically -->
+            </div>
+        </div>
+
+        <div id="dataset-avatar-container">
+            <div id="dataset-english-overlay">
+                <div class="overlay-title">English Sentence</div>
+                <div id="dataset-english-text"></div>
+            </div>
+            <div id="dataset-gloss-overlay">
+                <div class="overlay-title">ISL Gloss</div>
+                <div id="dataset-gloss-text"></div>
+            </div>
+            <video id="dataset-video-player" controls style="display: none; position: absolute; top: 10%; left: 10%; width: 80%; height: 80%; z-index: 15; background: #000; border-radius: 12px; box-shadow: 0 10px 40px rgba(0,0,0,0.8);"></video>
+            <div id="dataset-canvas-wrapper"></div>
+            <div id="dataset-slider-container">
+                <input type="range" id="timeline-slider" min="0" max="100" value="0">
+            </div>
+        </div>
+    </div>
+
+    <script type="module" src="./app.js"></script>
+    <script type="module" src="./sentences.js"></script>
+    <script>
+        const sentenceDetails = {
+            "Sentence_I_You_see_Happy_interpolated": { english: "I am happy to see you", gloss: "I YOU SEE HAPPY" },
+            "Sentence_He_I_see_Happy_interpolated": { english: "He is happy to see me", gloss: "HE I SEE HAPPY" },
+            "Sentence_I_Home_go_want_interpolated": { english: "I want to go home", gloss: "I HOME GO WANT" },
+            "Sentence_He_Home_go_want_interpolated": { english: "He wants to go home", gloss: "HE HOME GO WANT" },
+            "Sentence_Now_I_eat_want_interpolated": { english: "I want to eat now", gloss: "NOW I EAT WANT" },
+            "Sentence_Now_He_eat_want_interpolated": { english: "He wants to eat now", gloss: "NOW HE EAT WANT" },
+            "Sentence_I_You_see_want_interpolated": { english: "I want to see you", gloss: "I YOU SEE WANT" },
+            "Sentence_He_You_see_want_interpolated": { english: "He wants to see you", gloss: "HE YOU SEE WANT" },
+            "Sentence_I_He_see_want_interpolated": { english: "I want to see him", gloss: "I HE SEE WANT" },
+            "Sentence_Thank_You_I_Happy_interpolated": { english: "Thank you, I am happy", gloss: "THANK YOU I HAPPY" },
+            "Sentence_Thank_You_He_Happy_interpolated": { english: "Thank you, he is happy", gloss: "THANK YOU HE HAPPY" },
+            "Sentence_Hello_I_You_see_want_interpolated": { english: "Hello, I want to see you", gloss: "HELLO I YOU SEE WANT" },
+            "Sentence_Hello_He_You_see_want_interpolated": { english: "Hello, he wants to see you", gloss: "HELLO HE YOU SEE WANT" },
+            "Sentence_Now_I_office_go_interpolated": { english: "I am going to the office now", gloss: "NOW I OFFICE GO" },
+            "Sentence_Now_He_office_go_interpolated": { english: "He is going to the office now", gloss: "NOW HE OFFICE GO" },
+            "Sentence_Now_I_school_go_interpolated": { english: "I am going to school now", gloss: "NOW I SCHOOL GO" },
+            "Sentence_Now_He_school_go_interpolated": { english: "He is going to school now", gloss: "NOW HE SCHOOL GO" },
+            "Sentence_I_school_go_want_interpolated": { english: "I want to go to school", gloss: "I SCHOOL GO WANT" },
+            "Sentence_He_school_go_want_interpolated": { english: "He wants to go to school", gloss: "HE SCHOOL GO WANT" },
+            "Sentence_I_office_go_want_interpolated": { english: "I want to go to the office", gloss: "I OFFICE GO WANT" },
+            "Sentence_He_office_go_want_interpolated": { english: "He wants to go to the office", gloss: "HE OFFICE GO WANT" },
+            "Sentence_Now_Home_come_interpolated": { english: "Come home now", gloss: "NOW HOME COME" },
+            "Sentence_Now_He_Home_come_interpolated": { english: "He is coming home now", gloss: "NOW HE HOME COME" },
+            "Sentence_He_Home__come_interpolated": { english: "He is coming home", gloss: "HE HOME COME" },
+            "Sentence_I_Home_come_want_interpolated": { english: "I want to come home", gloss: "I HOME COME WANT" },
+            "Sentence_He_Home_come_want_interpolated": { english: "He wants to come home", gloss: "HE HOME COME WANT" },
+            "Sentence_You_Home_go_want_interpolated": { english: "You want to go home", gloss: "YOU HOME GO WANT" },
+            "Sentence_Now_You_eat_want_interpolated": { english: "You want to eat now", gloss: "NOW YOU EAT WANT" },
+            "Sentence_Now_You_Happy_interpolated": { english: "You are happy now", gloss: "NOW YOU HAPPY" },
+            "Sentence_You_I_see_want_interpolated": { english: "You want to see me", gloss: "YOU I SEE WANT" },
+            "Sentence_Now_I_You_see_interpolated": { english: "I see you now", gloss: "NOW I YOU SEE" },
+            "Sentence_Now_He_I_see_interpolated": { english: "He sees me now", gloss: "NOW HE I SEE" },
+            "Sentence_HEllO_WANT_THANKYOU_interpolated": { english: "Hello, I want to say thank you", gloss: "HELLO WANT THANK YOU" },
+            "Sentence_I_Home_go_interpolated": { english: "I am going home", gloss: "I HOME GO" },
+            "Sentence_You_office_come_interpolated": { english: "You are coming to the office", gloss: "YOU OFFICE COME" },
+            "Sentence_You_school__go_interpolated": { english: "You are going to school", gloss: "YOU SCHOOL GO" }
+        };
+
+        // List of 35 sentence files mapping to indices 0-34
+        const sentenceFiles = [
+            "Sentence_He_Home__come_interpolated",
+            "Sentence_He_Home_come_want_interpolated",
+            "Sentence_He_Home_go_want_interpolated",
+            "Sentence_He_I_see_Happy_interpolated",
+            "Sentence_He_You_see_want_interpolated",
+            "Sentence_He_office_go_want_interpolated",
+            "Sentence_He_school_go_want_interpolated",
+            "Sentence_Hello_He_You_see_want_interpolated",
+            "Sentence_Hello_I_You_see_want_interpolated",
+            "Sentence_I_He_see_want_interpolated",
+            "Sentence_I_Home_come_want_interpolated",
+            "Sentence_I_Home_go_interpolated",
+            "Sentence_I_Home_go_want_interpolated",
+            "Sentence_I_You_see_Happy_interpolated",
+            "Sentence_I_You_see_want_interpolated",
+            "Sentence_I_office_go_want_interpolated",
+            "Sentence_I_school_go_want_interpolated",
+            "Sentence_Now_He_Home_come_interpolated",
+            "Sentence_Now_He_I_see_interpolated",
+            "Sentence_Now_He_eat_want_interpolated",
+            "Sentence_Now_He_office_go_interpolated",
+            "Sentence_Now_He_school_go_interpolated",
+            "Sentence_Now_Home_come_interpolated",
+            "Sentence_Now_I_You_see_interpolated",
+            "Sentence_Now_I_eat_want_interpolated",
+            "Sentence_Now_I_office_go_interpolated",
+            "Sentence_Now_I_school_go_interpolated",
+            "Sentence_Now_You_Happy_interpolated",
+            "Sentence_Now_You_eat_want_interpolated",
+            "Sentence_Thank_You_He_Happy_interpolated",
+            "Sentence_Thank_You_I_Happy_interpolated",
+            "Sentence_You_Home_go_want_interpolated",
+            "Sentence_You_I_see_want_interpolated",
+            "Sentence_You_office_come_interpolated",
+            "Sentence_You_school__go_interpolated"
+        ];
+
+        document.addEventListener('DOMContentLoaded', () => {
+            const tooltip = document.getElementById('translate-tooltip');
+            const avatarContainer = document.getElementById('avatar-container');
+            let selectedSentenceIndex = -1;
+
+            // Hide tooltip when clicking elsewhere
+            document.addEventListener('mousedown', (e) => {
+                if (e.target !== tooltip) {
+                    tooltip.style.display = 'none';
+                }
+            });
+
+            // Handle text selection
+            const handleTextSelection = (e) => {
+                setTimeout(() => {
+                    const selection = window.getSelection();
+                    const selectedText = selection.toString().trim();
+
+                    if (selectedText.length > 0 && e.target !== tooltip) {
+                        // Find if selection is within a translatable sentence
+                        let node = selection.anchorNode;
+                        let sentenceSpan = null;
+                        
+                        while (node && node !== document.body) {
+                            if (node.nodeType === Node.ELEMENT_NODE && node.classList.contains('translatable-sentence')) {
+                                sentenceSpan = node;
+                                break;
+                            }
+                            node = node.parentNode;
+                        }
+
+                        // Try focus node if anchor node failed
+                        if (!sentenceSpan) {
+                            node = selection.focusNode;
+                            while (node && node !== document.body) {
+                                if (node.nodeType === Node.ELEMENT_NODE && node.classList.contains('translatable-sentence')) {
+                                    sentenceSpan = node;
+                                    break;
+                                }
+                                node = node.parentNode;
+                            }
+                        }
+
+                        if (sentenceSpan) {
+                            selectedSentenceIndex = parseInt(sentenceSpan.getAttribute('data-idx'));
+                            const range = selection.getRangeAt(0);
+                            const rect = range.getBoundingClientRect();
+
+                            if (rect.width > 0) {
+                                tooltip.style.left = `${rect.left + rect.width / 2 + window.scrollX}px`;
+                                tooltip.style.top = `${rect.top + window.scrollY}px`;
+                                tooltip.style.display = 'block';
+                            }
+                        }
+                    } else if (e.target !== tooltip) {
+                        tooltip.style.display = 'none';
+                    }
+                }, 50);
+            };
+
+            document.addEventListener('mouseup', handleTextSelection);
+            document.addEventListener('touchend', handleTextSelection);
+
+            const launchPlayBtn = document.getElementById('launch-play-btn');
+            const minimizeBtn = document.getElementById('minimize-btn');
+            const resizeHandle = document.getElementById('resize-handle');
+            let pendingAnimation = null;
+
+            // Execute translation when translate tooltip is clicked
+            const executeTranslation = (e) => {
+                if (e) e.preventDefault();
+                tooltip.style.display = 'none';
+                window.getSelection().removeAllRanges();
+
+                if (selectedSentenceIndex >= 0 && selectedSentenceIndex < sentenceFiles.length) {
+                    const fileName = sentenceFiles[selectedSentenceIndex];
+                    console.log(`Translating sentence index ${selectedSentenceIndex} -> ${fileName}`);
+                    
+                    pendingAnimation = fileName;
+                    
+                    // Stop any ongoing playback
+                    if (window.stopWebsitePlayback) window.stopWebsitePlayback();
+                    
+                    // Automatically click the launch play button if the widget is minimized
+                    if (!avatarContainer.classList.contains('expanded')) {
+                        launchPlayBtn.click();
+                    } else {
+                        // If already expanded, just load the new animation directly
+                        if (window.loadWebsiteAnimation) {
+                            window.loadWebsiteAnimation(fileName, true);
+                        }
+                    }
+                }
+            };
+
+            // First click on the launcher Play button expands the widget and starts playback
+            launchPlayBtn.addEventListener('click', () => {
+                // Enable smooth transition for expansion
+                avatarContainer.style.transition = 'width 0.4s cubic-bezier(0.16, 1, 0.3, 1), height 0.4s cubic-bezier(0.16, 1, 0.3, 1), left 0.4s cubic-bezier(0.16, 1, 0.3, 1), top 0.4s cubic-bezier(0.16, 1, 0.3, 1), padding 0.4s cubic-bezier(0.16, 1, 0.3, 1), gap 0.4s cubic-bezier(0.16, 1, 0.3, 1)';
+                
+                const rect = avatarContainer.getBoundingClientRect();
+                const targetWidth = 320;
+                const targetHeight = 420; // Mobile aspect ratio
+                
+                avatarContainer.classList.add('expanded');
+                avatarContainer.style.width = `${targetWidth}px`;
+                avatarContainer.style.height = `${targetHeight}px`;
+                
+                let currentLeft = parseFloat(avatarContainer.style.left) || rect.left;
+                let currentTop = parseFloat(avatarContainer.style.top) || rect.top;
+                
+                // Expand from bottom-right (left/top shifts left/up)
+                const newLeft = currentLeft - (targetWidth - rect.width);
+                const newTop = currentTop - (targetHeight - rect.height);
+                
+                avatarContainer.style.left = `${Math.max(25, Math.min(newLeft, window.innerWidth - targetWidth - 25))}px`;
+                avatarContainer.style.top = `${Math.max(25, Math.min(newTop, window.innerHeight - targetHeight - 25))}px`;
+                
+                setTimeout(() => {
+                    avatarContainer.style.transition = 'none'; // Disable transition so resizing dragging is smooth
+                    window.dispatchEvent(new Event('resize'));
+                }, 400);
+                
+                // Play the animation if pending, otherwise show T-pose (default load is T-pose)
+                if (window.loadWebsiteAnimation && pendingAnimation) {
+                    window.loadWebsiteAnimation(pendingAnimation, true);
+                    pendingAnimation = null;
+                }
+            });
+
+            // Minimize widget back to small row state with T-pose logo on left
+            minimizeBtn.addEventListener('click', (e) => {
+                e.stopPropagation();
+                
+                // Stop playback when minimizing
+                if (window.stopWebsitePlayback) window.stopWebsitePlayback();
+                
+                avatarContainer.style.transition = 'width 0.4s cubic-bezier(0.16, 1, 0.3, 1), height 0.4s cubic-bezier(0.16, 1, 0.3, 1), left 0.4s cubic-bezier(0.16, 1, 0.3, 1), top 0.4s cubic-bezier(0.16, 1, 0.3, 1), padding 0.4s cubic-bezier(0.16, 1, 0.3, 1), gap 0.4s cubic-bezier(0.16, 1, 0.3, 1)';
+                
+                const rect = avatarContainer.getBoundingClientRect();
+                const targetWidth = 320;
+                const targetHeight = 90;
+                
+                avatarContainer.classList.remove('expanded');
+                avatarContainer.style.width = `${targetWidth}px`;
+                avatarContainer.style.height = `${targetHeight}px`;
+                
+                let currentLeft = parseFloat(avatarContainer.style.left) || rect.left;
+                let currentTop = parseFloat(avatarContainer.style.top) || rect.top;
+                
+                // Shrink keeping bottom-right anchored
+                const newLeft = currentLeft + (rect.width - targetWidth);
+                const newTop = currentTop + (rect.height - targetHeight);
+                
+                avatarContainer.style.left = `${Math.max(25, Math.min(newLeft, window.innerWidth - targetWidth - 25))}px`;
+                avatarContainer.style.top = `${Math.max(25, Math.min(newTop, window.innerHeight - targetHeight - 25))}px`;
+                
+                setTimeout(() => {
+                    window.dispatchEvent(new Event('resize'));
+                }, 400);
+            });
+
+            tooltip.addEventListener('click', executeTranslation);
+            tooltip.addEventListener('touchstart', executeTranslation, {passive: false});
+
+            // --- Custom Top-Left Resize Logic ---
+            const resizer = document.getElementById('resize-handle');
+            let isResizing = false;
+            let startX, startY, startWidth, startHeight, startTop, startLeft;
+
+            const onResizeStart = (e) => {
+                isResizing = true;
+                startX = e.touches ? e.touches[0].clientX : e.clientX;
+                startY = e.touches ? e.touches[0].clientY : e.clientY;
+                startWidth = avatarContainer.offsetWidth;
+                startHeight = avatarContainer.offsetHeight;
+                
+                const rect = avatarContainer.getBoundingClientRect();
+                startTop = rect.top;
+                startLeft = rect.left;
+                
+                avatarContainer.style.bottom = 'auto';
+                avatarContainer.style.right = 'auto';
+                avatarContainer.style.top = `${startTop}px`;
+                avatarContainer.style.left = `${startLeft}px`;
+
+                if (!e.touches) e.preventDefault();
+            };
+            resizer.addEventListener('mousedown', onResizeStart);
+            resizer.addEventListener('touchstart', onResizeStart, {passive: false});
+
+            // --- Drag Logic ---
+            const dragHandle = document.getElementById('drag-handle');
+            let isDragging = false;
+            let dragStartX, dragStartY, dragInitialTop, dragInitialLeft;
+
+            const onDragStart = (e) => {
+                // Prevent drag if clicking close button
+                if (e.target.closest('#fullscreen-btn')) return;
+
+                isDragging = true;
+                dragStartX = e.touches ? e.touches[0].clientX : e.clientX;
+                dragStartY = e.touches ? e.touches[0].clientY : e.clientY;
+                
+                const rect = avatarContainer.getBoundingClientRect();
+                dragInitialTop = rect.top;
+                dragInitialLeft = rect.left;
+                
+                avatarContainer.style.bottom = 'auto';
+                avatarContainer.style.right = 'auto';
+                avatarContainer.style.top = `${dragInitialTop}px`;
+                avatarContainer.style.left = `${dragInitialLeft}px`;
+
+                if (!e.touches) e.preventDefault();
+            };
+            dragHandle.addEventListener('mousedown', onDragStart);
+            dragHandle.addEventListener('touchstart', onDragStart, {passive: false});
+
+            const onMove = (e) => {
+                const clientX = e.touches ? e.touches[0].clientX : e.clientX;
+                const clientY = e.touches ? e.touches[0].clientY : e.clientY;
+
+                if (isResizing) {
+                    if (e.touches) e.preventDefault();
+                    const dx = clientX - startX;
+                    const dy = clientY - startY;
+                    
+                    let targetWidth = startWidth - dx;
+                    if (targetWidth < 220) targetWidth = 220;
+                    
+                    const maxW = window.innerWidth * 0.9;
+                    const maxH = window.innerHeight * 0.9;
+                    const anchorRight = startLeft + startWidth;
+                    const anchorBottom = startTop + startHeight;
+                    
+                    const absoluteMaxW = Math.min(maxW, anchorRight);
+                    const absoluteMaxH = Math.min(maxH, anchorBottom);
+                    
+                    if (targetWidth > absoluteMaxW) targetWidth = absoluteMaxW;
+                    
+                    const targetHeight = targetWidth * (4.2 / 3.2); // Maintain widget ratio
+                    if (targetHeight > absoluteMaxH) {
+                        targetWidth = absoluteMaxH * (3.2 / 4.2);
+                    }
+                    
+                    const effectiveDx = startWidth - targetWidth;
+                    const effectiveDy = startHeight - (targetWidth * (4.2 / 3.2));
+                    
+                    avatarContainer.style.width = `${targetWidth}px`;
+                    avatarContainer.style.height = `${targetWidth * (4.2 / 3.2)}px`;
+                    avatarContainer.style.left = `${startLeft + effectiveDx}px`;
+                    avatarContainer.style.top = `${startTop + effectiveDy}px`;
+                } else if (isDragging) {
+                    if (e.touches) e.preventDefault();
+                    const dx = clientX - dragStartX;
+                    const dy = clientY - dragStartY;
+                    avatarContainer.style.left = `${dragInitialLeft + dx}px`;
+                    avatarContainer.style.top = `${dragInitialTop + dy}px`;
+                }
+            };
+            window.addEventListener('mousemove', onMove);
+            window.addEventListener('touchmove', onMove, {passive: false});
+
+            const clampToScreen = () => {
+                if (avatarContainer.classList.contains('fullscreen')) return;
+                if (!avatarContainer.style.left && !avatarContainer.style.top) return;
+                
+                const rect = avatarContainer.getBoundingClientRect();
+                let newLeft = parseFloat(avatarContainer.style.left) || rect.left;
+                let newTop = parseFloat(avatarContainer.style.top) || rect.top;
+                
+                if (newLeft + rect.width > window.innerWidth) {
+                    newLeft = window.innerWidth - rect.width - 25;
+                }
+                if (newTop + rect.height > window.innerHeight) {
+                    newTop = window.innerHeight - rect.height - 25;
+                }
+                if (newLeft < 0) newLeft = 25;
+                if (newTop < 0) newTop = 25;
+                
+                avatarContainer.style.left = `${newLeft}px`;
+                avatarContainer.style.top = `${newTop}px`;
+            };
+
+            const onEnd = () => {
+                if (isResizing || isDragging) {
+                    isResizing = false;
+                    isDragging = false;
+                    clampToScreen();
+                    window.dispatchEvent(new Event('resize'));
+                }
+            };
+            window.addEventListener('mouseup', onEnd);
+            window.addEventListener('touchend', onEnd);
+
+            // Fullscreen toggle logic
+            const fsBtn = document.getElementById('fullscreen-btn');
+            fsBtn.addEventListener('click', () => {
+                avatarContainer.classList.toggle('fullscreen');
+                window.dispatchEvent(new Event('resize'));
+                if (!avatarContainer.classList.contains('fullscreen')) {
+                    clampToScreen();
+                }
+            });
+
+            // Recalculate and clamp widget position on window resize to prevent it from going offscreen
+            window.addEventListener('resize', clampToScreen);
+
+            // --- Nav Tab Switching Logic ---
+            const navLinks = document.querySelectorAll('header nav a');
+            const websiteRoot = document.getElementById('website-root');
+            const datasetRoot = document.getElementById('dataset-tab-content');
+            
+            navLinks.forEach(link => {
+                link.addEventListener('click', (e) => {
+                    const isDatasetTab = link.getAttribute('data-tab') === 'dataset';
+                    
+                    if (isDatasetTab) {
+                        e.preventDefault();
+                        
+                        // Set active link style
+                        navLinks.forEach(l => l.classList.remove('active'));
+                        link.classList.add('active');
+                        
+                        // Hide website, show dataset
+                        websiteRoot.style.display = 'none';
+                        datasetRoot.style.display = 'flex';
+                        
+                        // Stop any ongoing floating widget playback
+                        if (window.stopWebsitePlayback) window.stopWebsitePlayback();
+                        
+                        // Trigger resize for Three.js in dataset view
+                        window.dispatchEvent(new Event('resize'));
+                    } else {
+                        // Regular anchor behavior for website tabs
+                        // If we are currently in dataset view, switch back first!
+                        if (datasetRoot.style.display === 'flex') {
+                            datasetRoot.style.display = 'none';
+                            websiteRoot.style.display = 'block';
+                            
+                            // Set active link style
+                            navLinks.forEach(l => l.classList.remove('active'));
+                            link.classList.add('active');
+                            
+                            // Stop any ongoing dataset playback
+                            if (window.stopDatasetPlayback) window.stopDatasetPlayback();
+                            
+                            // Trigger resize to fix layout
+                            window.dispatchEvent(new Event('resize'));
+                        }
+                    }
+                });
+            });
+
+            // --- Dynamic Sidebar List Loader for 3D Dataset Tab ---
+            const listEl = document.getElementById('sentences-list');
+            if (listEl) {
+                const wordFiles = [
+                    "Happy", "He", "Hello", "Home", "I", "Now", "Thank_You", "want", "You",
+                    "come", "eat", "go", "office", "school", "see"
+                ];
+                const rawList = [...sentenceFiles, ...wordFiles];
+                
+                // --- Custom Ordering & Interleaving Algorithm ---
+                const wordsList = [];
+                const sentencesList = [];
+                
+                rawList.forEach(name => {
+                    if (name.startsWith('Sentence_')) {
+                        sentencesList.push(name);
+                    } else {
+                        wordsList.push(name);
+                    }
+                });
+                
+                // Sort words: Priority words (Thank_You, want, You) first, then others alphabetically
+                const priorityWords = ["Thank_You", "want", "You"];
+                wordsList.sort((a, b) => {
+                    const aPri = priorityWords.indexOf(a);
+                    const bPri = priorityWords.indexOf(b);
+                    if (aPri !== -1 && bPri !== -1) return aPri - bPri;
+                    if (aPri !== -1) return -1;
+                    if (bPri !== -1) return 1;
+                    return a.localeCompare(b);
+                });
+                
+                // Group sentences by subject (the first word following 'Sentence_')
+                const sentenceGroups = {};
+                sentencesList.forEach(name => {
+                    const parts = name.split('_');
+                    const subject = parts.length > 1 ? parts[1] : 'other';
+                    if (!sentenceGroups[subject]) {
+                        sentenceGroups[subject] = [];
+                    }
+                    sentenceGroups[subject].push(name);
+                });
+                
+                // Sort each group alphabetically for consistency
+                const groupKeys = Object.keys(sentenceGroups).sort();
+                groupKeys.forEach(key => {
+                    sentenceGroups[key].sort();
+                });
+                
+                // Interleave sentences from different groups to avoid consecutive similar subject sentences
+                const interleavedSentences = [];
+                let hasMore = true;
+                let index = 0;
+                while (hasMore) {
+                    hasMore = false;
+                    for (const key of groupKeys) {
+                        const group = sentenceGroups[key];
+                        if (index < group.length) {
+                            interleavedSentences.push(group[index]);
+                            hasMore = true;
+                        }
+                    }
+                    index++;
+                }
+                
+                // Final ordered list: Interleaved sentences first, then sorted words
+                const finalSentences = [...interleavedSentences, ...wordsList];
+                
+                const updateButtonIcons = (activeName, isPlayingNow) => {
+                    document.querySelectorAll('.sentence-item').forEach(item => {
+                        const itemName = item.querySelector('.sentence-name').title;
+                        const btn = item.querySelector('.sentence-play-btn');
+                        if (itemName === activeName) {
+                            btn.innerHTML = isPlayingNow ? '⏸' : '▶';
+                        } else {
+                            btn.innerHTML = '▶';
+                        }
+                    });
+                };
+                
+                const createPlayableItem = (name, targetContainer) => {
+                    const item = document.createElement('div');
+                    item.className = 'sentence-item';
+                    
+                    let displayName = name
+                        .replace(/^Sentence_/i, '')
+                        .replace(/_interpolated$/i, '')
+                        .replace(/_/g, ' ');
+                    
+                    const nameSpan = document.createElement('span');
+                    nameSpan.className = 'sentence-name';
+                    nameSpan.textContent = displayName;
+                    nameSpan.title = name;
+                    
+                    const playBtn = document.createElement('button');
+                    playBtn.className = 'sentence-play-btn';
+                    playBtn.innerHTML = '▶';
+                    playBtn.title = `Play ${displayName}`;
+                    
+                    item.addEventListener('click', async () => {
+                        document.querySelectorAll('.sentence-item').forEach(el => el.classList.remove('active'));
+                        item.classList.add('active');
+                        
+                        // Hide video player, show 3D viewport
+                        const canvasWrapper = document.getElementById('dataset-canvas-wrapper');
+                        const sliderContainer = document.getElementById('dataset-slider-container');
+                        const videoPlayer = document.getElementById('dataset-video-player');
+                        
+                        if (videoPlayer) {
+                            videoPlayer.pause();
+                            videoPlayer.style.display = 'none';
+                        }
+                        if (canvasWrapper) canvasWrapper.style.display = 'block';
+                        if (sliderContainer) sliderContainer.style.display = 'flex';
+                        
+                        const state = window.getCurrentDatasetPlaybackState ? window.getCurrentDatasetPlaybackState() : null;
+                        
+                        if (state && state.currentPlayingName === name) {
+                            // If it is currently playing or finished, click restarts playback from start!
+                            window.stopDatasetPlayback();
+                            window.toggleDatasetPlayPause();
+                            updateButtonIcons(name, true);
+                            return;
+                        }
+                        
+                        if (window.loadDatasetAnimation) {
+                            await window.loadDatasetAnimation(name, true);
+                            updateButtonIcons(name, true);
+                        }
+                    });
+                    
+                    item.appendChild(nameSpan);
+                    item.appendChild(playBtn);
+                    targetContainer.appendChild(item);
+                };
+
+                // Populate sentences section
+                interleavedSentences.forEach(name => {
+                    createPlayableItem(name, listEl);
+                });
+
+                // Populate words section
+                const wordsListEl = document.getElementById('words-list');
+                if (wordsListEl) {
+                    wordsList.forEach(name => {
+                        createPlayableItem(name, wordsListEl);
+                    });
+                }
+
+                // --- Load Reference Videos list ---
+                // Map each word to its corresponding reference MP4 file inside ./intepolation_code/videos/
+                const referenceVideos = [
+                    { word: "Happy", file: "Happy" },
+                    { word: "He", file: "He" },
+                    { word: "Hello", file: "Hello" },
+                    { word: "Home", file: "House_Home" },
+                    { word: "I", file: "I_Me" },
+                    { word: "Now", file: "Now" },
+                    { word: "Thank_You", file: "Thank_You" },
+                    { word: "want", file: "Want_Desire_Wish_For" },
+                    { word: "You", file: "You" },
+                    { word: "come", file: "come" },
+                    { word: "eat", file: "eat" },
+                    { word: "go", file: "go" },
+                    { word: "office", file: "office" },
+                    { word: "school", file: "school" },
+                    { word: "see", file: "see" }
+                ];
+
+                const videosListEl = document.getElementById('videos-list');
+                if (videosListEl) {
+                    referenceVideos.forEach(item => {
+                        const divItem = document.createElement('div');
+                        divItem.className = 'sentence-item';
+                        
+                        let displayName = item.word.replace(/_/g, ' ');
+                        
+                        const nameSpan = document.createElement('span');
+                        nameSpan.className = 'sentence-name';
+                        nameSpan.textContent = displayName + " (Video)";
+                        nameSpan.title = item.word;
+                        
+                        const playBtn = document.createElement('button');
+                        playBtn.className = 'sentence-play-btn';
+                        playBtn.innerHTML = '▶';
+                        playBtn.title = `Play video ${displayName}`;
+                        
+                        divItem.addEventListener('click', () => {
+                            // Deactivate all active sentences/videos
+                            document.querySelectorAll('.sentence-item').forEach(el => el.classList.remove('active'));
+                            divItem.classList.add('active');
+                            
+                            // Stop Three.js playback
+                            if (window.stopDatasetPlayback) window.stopDatasetPlayback();
+                            
+                            // Hide 3D canvas and slider, show video player
+                            const canvasWrapper = document.getElementById('dataset-canvas-wrapper');
+                            const sliderContainer = document.getElementById('dataset-slider-container');
+                            const engOverlay = document.getElementById('dataset-english-overlay');
+                            const gloOverlay = document.getElementById('dataset-gloss-overlay');
+                            const videoPlayer = document.getElementById('dataset-video-player');
+                            
+                            if (canvasWrapper) canvasWrapper.style.display = 'none';
+                            if (sliderContainer) sliderContainer.style.display = 'none';
+                            if (engOverlay) engOverlay.classList.remove('visible');
+                            if (gloOverlay) gloOverlay.classList.remove('visible');
+                            
+                            if (videoPlayer) {
+                                videoPlayer.src = `./intepolation_code/videos/${item.file}.mp4`;
+                                videoPlayer.style.display = 'block';
+                                videoPlayer.play();
+                            }
+                        });
+                        
+                        divItem.appendChild(nameSpan);
+                        divItem.appendChild(playBtn);
+                        videosListEl.appendChild(divItem);
+                    });
+                }
+                
+                // Event listener handlers for dataset-canvas-wrapper overlays
+                const updateOverlays = (fileName, show) => {
+                    const engOverlay = document.getElementById('dataset-english-overlay');
+                    const gloOverlay = document.getElementById('dataset-gloss-overlay');
+                    const engText = document.getElementById('dataset-english-text');
+                    const gloText = document.getElementById('dataset-gloss-text');
+                    if (!engOverlay || !gloOverlay || !engText || !gloText) return;
+                    
+                    if (show && sentenceDetails[fileName]) {
+                        engText.textContent = sentenceDetails[fileName].english;
+                        gloText.textContent = sentenceDetails[fileName].gloss;
+                        engOverlay.classList.add('visible');
+                        gloOverlay.classList.add('visible');
+                    } else {
+                        engOverlay.classList.remove('visible');
+                        gloOverlay.classList.remove('visible');
+                    }
+                };
+                
+                window.addEventListener('animationStarted', (e) => {
+                    const startedName = e.detail.name;
+                    updateButtonIcons(startedName, true);
+                    updateOverlays(startedName, true);
+                });
+                
+                window.addEventListener('animationFinished', (e) => {
+                    const finishedName = e.detail.name;
+                    updateButtonIcons(finishedName, false);
+                    updateOverlays(finishedName, false);
+                });
+                
+                window.addEventListener('animationPaused', (e) => {
+                    const pausedName = e.detail.name;
+                    updateButtonIcons(pausedName, false);
+                    updateOverlays(pausedName, false);
+                });
+            }
+        });
+    </script>
+</body>
+</html>

@@ -1,0 +1,485 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>ISL 3D Avatar Dataset</title>
+    <style>
+        body { 
+            margin: 0; 
+            padding: 0;
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+            background-color: #121212; 
+            color: #ffffff;
+            overflow: hidden;
+        }
+        
+        #avatar-container {
+            width: calc(100vw - 320px);
+            height: 100vh;
+            position: absolute;
+            left: 320px;
+            background-color: #1c1c1c;
+        }
+
+        #left-sidebar {
+            position: absolute;
+            left: 0;
+            top: 0;
+            bottom: 0;
+            width: 320px;
+            background: #111111;
+            padding: 25px 20px;
+            box-sizing: border-box;
+            z-index: 10;
+            overflow-y: auto;
+            border-right: 1px solid #2d2d2d;
+            box-shadow: 5px 0 15px rgba(0,0,0,0.5);
+            
+            /* Disable text selection */
+            user-select: none;
+            -webkit-user-select: none;
+            -moz-user-select: none;
+            -ms-user-select: none;
+        }
+
+        .sentence-item {
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            background: #1e1e1e;
+            border: 1px solid #2d2d2d;
+            border-radius: 10px;
+            padding: 14px 18px;
+            margin-bottom: 12px;
+            transition: all 0.25s ease;
+            cursor: pointer;
+        }
+
+        .sentence-item:hover {
+            background: #252525;
+            border-color: #00adb5;
+            transform: translateY(-2px);
+            box-shadow: 0 4px 10px rgba(0,0,0,0.3);
+        }
+
+        .sentence-item.active {
+            background: rgba(0, 173, 181, 0.1);
+            border-color: #00adb5;
+        }
+
+        .sentence-name {
+            font-size: 15px;
+            font-weight: 600;
+            color: #e0e0e0;
+            white-space: nowrap;
+            overflow: hidden;
+            text-overflow: ellipsis;
+            flex-grow: 1;
+            margin-right: 15px;
+            text-align: left;
+        }
+
+        .sentence-play-btn {
+            width: 36px;
+            height: 36px;
+            border-radius: 50%;
+            background: #00adb5;
+            border: none;
+            color: #121212;
+            font-size: 16px;
+            font-weight: bold;
+            cursor: pointer;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            transition: all 0.2s ease;
+            flex-shrink: 0;
+            box-shadow: 0 2px 6px rgba(0, 173, 181, 0.4);
+        }
+
+        .sentence-play-btn:hover {
+            transform: scale(1.1);
+            background: #00f0f8;
+            box-shadow: 0 4px 12px rgba(0, 173, 181, 0.6);
+        }
+        
+        #canvas-wrapper {
+            width: 100%;
+            height: 100%;
+        }
+
+        #slider-container {
+            position: absolute;
+            bottom: 30px;
+            left: 5%;
+            right: 5%;
+            background: rgba(18, 18, 18, 0.85);
+            backdrop-filter: blur(10px);
+            -webkit-backdrop-filter: blur(10px);
+            padding: 12px 25px;
+            border-radius: 12px;
+            border: 1px solid rgba(255, 255, 255, 0.1);
+            z-index: 1000;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            box-shadow: 0 8px 32px rgba(0, 0, 0, 0.5);
+        }
+        
+        #timeline-slider {
+            width: 100%;
+            cursor: pointer;
+            height: 6px;
+            -webkit-appearance: none;
+            background: rgba(255, 255, 255, 0.2);
+            border-radius: 3px;
+            outline: none;
+            transition: background 0.3s;
+        }
+        
+        #timeline-slider::-webkit-slider-runnable-track {
+            width: 100%;
+            height: 6px;
+            border-radius: 3px;
+        }
+        
+        #timeline-slider::-webkit-slider-thumb {
+            -webkit-appearance: none;
+            appearance: none;
+            width: 18px;
+            height: 18px;
+            border-radius: 50%;
+            background: #00adb5;
+            cursor: pointer;
+            margin-top: -6px;
+            box-shadow: 0 0 10px rgba(0, 173, 181, 0.5);
+            transition: transform 0.1s, background-color 0.2s;
+        }
+        
+        #timeline-slider::-webkit-slider-thumb:hover {
+            transform: scale(1.2);
+            background: #00f0f8;
+        }
+
+        #english-overlay, #gloss-overlay {
+            position: absolute;
+            top: 45%;
+            transform: translateY(-50%);
+            background: rgba(18, 18, 18, 0.85);
+            backdrop-filter: blur(12px);
+            -webkit-backdrop-filter: blur(12px);
+            border: 1px solid rgba(255, 255, 255, 0.1);
+            border-radius: 14px;
+            padding: 18px 22px;
+            width: 280px;
+            box-sizing: border-box;
+            z-index: 5;
+            opacity: 0;
+            pointer-events: none;
+            transition: opacity 0.35s cubic-bezier(0.16, 1, 0.3, 1), transform 0.35s cubic-bezier(0.16, 1, 0.3, 1);
+            box-shadow: 0 12px 36px rgba(0,0,0,0.5);
+        }
+        
+        #english-overlay {
+            left: 30px;
+            transform: translateY(-50%) translateX(-20px);
+        }
+        
+        #gloss-overlay {
+            right: 30px;
+            transform: translateY(-50%) translateX(20px);
+        }
+        
+        #english-overlay.visible {
+            opacity: 1;
+            transform: translateY(-50%) translateX(0);
+        }
+        
+        #gloss-overlay.visible {
+            opacity: 1;
+            transform: translateY(-50%) translateX(0);
+        }
+        
+        .overlay-title {
+            font-size: 11px;
+            text-transform: uppercase;
+            color: #00adb5;
+            letter-spacing: 1.5px;
+            font-weight: 700;
+            margin-bottom: 8px;
+            text-align: left;
+        }
+        
+        #english-text, #gloss-text {
+            font-size: 17px;
+            font-weight: 600;
+            color: #ffffff;
+            line-height: 1.45;
+            text-align: left;
+            word-wrap: break-word;
+        }
+    </style>
+    <script type="importmap">
+      {
+        "imports": {
+          "three": "https://unpkg.com/three@0.158.0/build/three.module.js",
+          "three/addons/": "https://unpkg.com/three@0.158.0/examples/jsm/",
+          "lil-gui": "https://unpkg.com/lil-gui@0.19.1/dist/lil-gui.esm.min.js"
+        }
+      }
+    </script>
+</head>
+<body style="margin: 0; padding: 0; background-color: #121212; color: #ffffff; display: flex; height: 100vh; overflow: hidden; font-family: system-ui, -apple-system, sans-serif;">
+    <div id="left-sidebar">
+        <h2 style="margin-top: 0; border-bottom: 1px solid #2d2d2d; padding-bottom: 18px; font-size: 1.4rem; color: #00adb5; display: flex; align-items: center; gap: 10px; font-family: system-ui;">
+            <span>🎬 ISL 3D Avatar Dataset</span>
+        </h2>
+        <div id="sentences-list" style="margin-top: 20px;">
+            <!-- Loaded dynamically -->
+        </div>
+    </div>
+
+    <div id="avatar-container">
+        <div id="english-overlay">
+            <div class="overlay-title">English Sentence</div>
+            <div id="english-text"></div>
+        </div>
+        <div id="gloss-overlay">
+            <div class="overlay-title">ISL Gloss</div>
+            <div id="gloss-text"></div>
+        </div>
+        <div id="canvas-wrapper"></div>
+        <div id="slider-container">
+            <input type="range" id="timeline-slider" min="0" max="100" value="0">
+        </div>
+    </div>
+
+    <script type="module" src="./sentences.js"></script>
+    <script>
+        document.addEventListener('DOMContentLoaded', async () => {
+            const listEl = document.getElementById('sentences-list');
+            if (!listEl) return;
+
+            const sentenceDetails = {
+                "Sentence_I_You_see_Happy_interpolated": { english: "I am happy to see you", gloss: "I YOU SEE HAPPY" },
+                "Sentence_He_I_see_Happy_interpolated": { english: "He is happy to see me", gloss: "HE I SEE HAPPY" },
+                "Sentence_I_Home_go_want_interpolated": { english: "I want to go home", gloss: "I HOME GO WANT" },
+                "Sentence_He_Home_go_want_interpolated": { english: "He wants to go home", gloss: "HE HOME GO WANT" },
+                "Sentence_Now_I_eat_want_interpolated": { english: "I want to eat now", gloss: "NOW I EAT WANT" },
+                "Sentence_Now_He_eat_want_interpolated": { english: "He wants to eat now", gloss: "NOW HE EAT WANT" },
+                "Sentence_I_You_see_want_interpolated": { english: "I want to see you", gloss: "I YOU SEE WANT" },
+                "Sentence_He_You_see_want_interpolated": { english: "He wants to see you", gloss: "HE YOU SEE WANT" },
+                "Sentence_I_He_see_want_interpolated": { english: "I want to see him", gloss: "I HE SEE WANT" },
+                "Sentence_Thank_You_I_Happy_interpolated": { english: "Thank you, I am happy", gloss: "THANK YOU I HAPPY" },
+                "Sentence_Thank_You_He_Happy_interpolated": { english: "Thank you, he is happy", gloss: "THANK YOU HE HAPPY" },
+                "Sentence_Hello_I_You_see_want_interpolated": { english: "Hello, I want to see you", gloss: "HELLO I YOU SEE WANT" },
+                "Sentence_Hello_He_You_see_want_interpolated": { english: "Hello, he wants to see you", gloss: "HELLO HE YOU SEE WANT" },
+                "Sentence_Now_I_office_go_interpolated": { english: "I am going to the office now", gloss: "NOW I OFFICE GO" },
+                "Sentence_Now_He_office_go_interpolated": { english: "He is going to the office now", gloss: "NOW HE OFFICE GO" },
+                "Sentence_Now_I_school_go_interpolated": { english: "I am going to school now", gloss: "NOW I SCHOOL GO" },
+                "Sentence_Now_He_school_go_interpolated": { english: "He is going to school now", gloss: "NOW HE SCHOOL GO" },
+                "Sentence_I_school_go_want_interpolated": { english: "I want to go to school", gloss: "I SCHOOL GO WANT" },
+                "Sentence_He_school_go_want_interpolated": { english: "He wants to go to school", gloss: "HE SCHOOL GO WANT" },
+                "Sentence_I_office_go_want_interpolated": { english: "I want to go to the office", gloss: "I OFFICE GO WANT" },
+                "Sentence_He_office_go_want_interpolated": { english: "He wants to go to the office", gloss: "HE OFFICE GO WANT" },
+                "Sentence_Now_Home_come_interpolated": { english: "Come home now", gloss: "NOW HOME COME" },
+                "Sentence_Now_He_Home_come_interpolated": { english: "He is coming home now", gloss: "NOW HE HOME COME" },
+                "Sentence_He_Home__come_interpolated": { english: "He is coming home", gloss: "HE HOME COME" },
+                "Sentence_I_Home_come_want_interpolated": { english: "I want to come home", gloss: "I HOME COME WANT" },
+                "Sentence_He_Home_come_want_interpolated": { english: "He wants to come home", gloss: "HE HOME COME WANT" },
+                "Sentence_You_Home_go_want_interpolated": { english: "You want to go home", gloss: "YOU HOME GO WANT" },
+                "Sentence_Now_You_eat_want_interpolated": { english: "You want to eat now", gloss: "NOW YOU EAT WANT" },
+                "Sentence_Now_You_Happy_interpolated": { english: "You are happy now", gloss: "NOW YOU HAPPY" },
+                "Sentence_You_I_see_want_interpolated": { english: "You want to see me", gloss: "YOU I SEE WANT" },
+                "Sentence_Now_I_You_see_interpolated": { english: "I see you now", gloss: "NOW I YOU SEE" },
+                "Sentence_Now_He_I_see_interpolated": { english: "He sees me now", gloss: "NOW HE I SEE" },
+                "Sentence_HEllO_WANT_THANKYOU_interpolated": { english: "Hello, I want to say thank you", gloss: "HELLO WANT THANK YOU" },
+                "Sentence_I_Home_go_interpolated": { english: "I am going home", gloss: "I HOME GO" },
+                "Sentence_You_office_come_interpolated": { english: "You are coming to the office", gloss: "YOU OFFICE COME" },
+                "Sentence_You_school__go_interpolated": { english: "You are going to school", gloss: "YOU SCHOOL GO" }
+            };
+
+            const updateOverlays = (fileName, show) => {
+                const engOverlay = document.getElementById('english-overlay');
+                const gloOverlay = document.getElementById('gloss-overlay');
+                const engText = document.getElementById('english-text');
+                const gloText = document.getElementById('gloss-text');
+                if (!engOverlay || !gloOverlay || !engText || !gloText) return;
+                
+                if (show && sentenceDetails[fileName]) {
+                    engText.textContent = sentenceDetails[fileName].english;
+                    gloText.textContent = sentenceDetails[fileName].gloss;
+                    engOverlay.classList.add('visible');
+                    gloOverlay.classList.add('visible');
+                } else {
+                    engOverlay.classList.remove('visible');
+                    gloOverlay.classList.remove('visible');
+                }
+            };
+            
+            // Fallback list of sentences
+            const defaultSentences = [
+                "Sentence_HEllO_WANT_THANKYOU_interpolated",
+                "Sentence_Home_go_interpolated"
+            ];
+            
+            let rawList = [];
+            
+            try {
+                const response = await fetch('./intepolation_code/keyframes_interp/');
+                if (response.ok) {
+                    const htmlText = await response.text();
+                    const parser = new DOMParser();
+                    const doc = parser.parseFromString(htmlText, 'text/html');
+                    const links = Array.from(doc.querySelectorAll('a'))
+                        .map(a => a.getAttribute('href'))
+                        .filter(href => href && href.endsWith('.json'))
+                        .map(href => href.replace('.json', ''));
+                        
+                    rawList = Array.from(new Set(links)).filter(name => name.length > 0);
+                }
+            } catch (e) {
+                console.warn("Could not scan directory listing, using fallback:", e);
+            }
+            
+            if (rawList.length === 0) {
+                rawList = defaultSentences;
+            }
+            
+            // --- Custom Ordering & Interleaving Algorithm ---
+            const wordsList = [];
+            const sentencesList = [];
+            
+            rawList.forEach(name => {
+                if (name.startsWith('Sentence_')) {
+                    sentencesList.push(name);
+                } else {
+                    wordsList.push(name);
+                }
+            });
+            
+            // Sort words: Priority words (Thank_You, want, You) first, then others alphabetically
+            const priorityWords = ["Thank_You", "want", "You"];
+            wordsList.sort((a, b) => {
+                const aPri = priorityWords.indexOf(a);
+                const bPri = priorityWords.indexOf(b);
+                if (aPri !== -1 && bPri !== -1) return aPri - bPri;
+                if (aPri !== -1) return -1;
+                if (bPri !== -1) return 1;
+                return a.localeCompare(b);
+            });
+            
+            // Group sentences by subject (the first word following 'Sentence_')
+            const sentenceGroups = {};
+            sentencesList.forEach(name => {
+                const parts = name.split('_');
+                const subject = parts.length > 1 ? parts[1] : 'other';
+                if (!sentenceGroups[subject]) {
+                    sentenceGroups[subject] = [];
+                }
+                sentenceGroups[subject].push(name);
+            });
+            
+            // Sort each group alphabetically for consistency
+            const groupKeys = Object.keys(sentenceGroups).sort();
+            groupKeys.forEach(key => {
+                sentenceGroups[key].sort();
+            });
+            
+            // Interleave sentences from different groups to avoid consecutive similar subject sentences
+            const interleavedSentences = [];
+            let hasMore = true;
+            let index = 0;
+            while (hasMore) {
+                hasMore = false;
+                for (const key of groupKeys) {
+                    const group = sentenceGroups[key];
+                    if (index < group.length) {
+                        interleavedSentences.push(group[index]);
+                        hasMore = true;
+                    }
+                }
+                index++;
+            }
+            
+            // Final ordered list: Interleaved sentences first, then sorted words
+            const finalSentences = [...interleavedSentences, ...wordsList];
+            
+            const updateButtonIcons = (activeName, isPlayingNow) => {
+                document.querySelectorAll('.sentence-item').forEach(item => {
+                    const itemName = item.querySelector('.sentence-name').title;
+                    const btn = item.querySelector('.sentence-play-btn');
+                    if (itemName === activeName) {
+                        btn.innerHTML = isPlayingNow ? '⏸' : '▶';
+                    } else {
+                        btn.innerHTML = '▶';
+                    }
+                });
+            };
+            
+            finalSentences.forEach(name => {
+                const item = document.createElement('div');
+                item.className = 'sentence-item';
+                
+                let displayName = name
+                    .replace(/^Sentence_/i, '')
+                    .replace(/_interpolated$/i, '')
+                    .replace(/_/g, ' ');
+                
+                const nameSpan = document.createElement('span');
+                nameSpan.className = 'sentence-name';
+                nameSpan.textContent = displayName;
+                nameSpan.title = name;
+                
+                const playBtn = document.createElement('button');
+                playBtn.className = 'sentence-play-btn';
+                playBtn.innerHTML = '▶';
+                playBtn.title = `Play ${displayName}`;
+                
+                item.addEventListener('click', async () => {
+                    document.querySelectorAll('.sentence-item').forEach(el => el.classList.remove('active'));
+                    item.classList.add('active');
+                    
+                    const state = window.getCurrentPlaybackState ? window.getCurrentPlaybackState() : null;
+                    
+                    if (state && state.currentPlayingName === name) {
+                        // If it finished playing, or if it is currently playing, clicking it will restart it from frame 0 and play!
+                        window.stopPlayback();
+                        window.togglePlayPause();
+                        updateButtonIcons(name, true);
+                        return;
+                    }
+                    
+                    if (window.loadSentenceAnimation) {
+                        await window.loadSentenceAnimation(name, true);
+                        updateButtonIcons(name, true);
+                    }
+                });
+                
+                item.appendChild(nameSpan);
+                item.appendChild(playBtn);
+                listEl.appendChild(item);
+            });
+            
+            window.addEventListener('animationStarted', (e) => {
+                const startedName = e.detail.name;
+                updateButtonIcons(startedName, true);
+                updateOverlays(startedName, true);
+            });
+
+            window.addEventListener('animationFinished', (e) => {
+                const finishedName = e.detail.name;
+                updateButtonIcons(finishedName, false);
+                updateOverlays(finishedName, false);
+            });
+            
+            window.addEventListener('animationPaused', (e) => {
+                const pausedName = e.detail.name;
+                updateButtonIcons(pausedName, false);
+                updateOverlays(pausedName, false);
+            });
+        });
+    </script>
+</body>
+</html>

@@ -1,0 +1,22 @@
+# Licensed models and data (not part of this repository)
+smplx/
+human_model_files/
+*.pkl
+*.npz
+*.glb
+*.task
+*.mp4
+*.zip
+dataset/
+sign_annotation/
+
+# Generated at runtime
+online/2_interpolation/output/
+server.log
+server.pid
+
+# Python / editors
+__pycache__/
+.venv/
+.ipynb_checkpoints/
+.claude/
