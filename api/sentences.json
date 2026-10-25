@@ -2,163 +2,273 @@
   "sentences": [
     {
       "id": 1,
-      "english": "He is coming home"
+      "english": "Hello, my name is Ravi.",
+      "gloss": "HELLO MY NAME R-A-V-I",
+      "module": "Most commonly used sentences in ISL"
     },
     {
       "id": 2,
-      "english": "He wants to come home"
+      "english": "What is your name?",
+      "gloss": "YOUR NAME WHAT",
+      "module": "Most commonly used sentences in ISL"
     },
     {
       "id": 3,
-      "english": "He wants to go home"
+      "english": "Good morning.",
+      "gloss": "MORNING GOOD",
+      "module": "Most commonly used sentences in ISL"
     },
     {
       "id": 4,
-      "english": "He is happy to see me"
+      "english": "Good night.",
+      "gloss": "NIGHT GOOD",
+      "module": "Most commonly used sentences in ISL"
     },
     {
       "id": 5,
-      "english": "He wants to see you"
+      "english": "I am happy to meet you.",
+      "gloss": "I HAPPY YOU MEET",
+      "module": "Most commonly used sentences in ISL"
     },
     {
       "id": 6,
-      "english": "He wants to go to the office"
+      "english": "See you tomorrow.",
+      "gloss": "YOU TOMORROW SEE",
+      "module": "Most commonly used sentences in ISL"
     },
     {
       "id": 7,
-      "english": "He wants to go to school"
+      "english": "The sky is blue.",
+      "gloss": "SKY BLUE",
+      "module": "Describing surrounding things (Based on colours, shapes and size)"
     },
     {
       "id": 8,
-      "english": "Hello, he wants to see you"
+      "english": "I have a big red bag.",
+      "gloss": "I BAG BIG RED HAVE",
+      "module": "Describing surrounding things (Based on colours, shapes and size)"
     },
     {
       "id": 9,
-      "english": "Hello, I want to see you"
+      "english": "Her shirt is yellow.",
+      "gloss": "HER SHIRT YELLOW",
+      "module": "Describing surrounding things (Based on colours, shapes and size)"
     },
     {
       "id": 10,
-      "english": "I want to see him"
+      "english": "The flower is pink.",
+      "gloss": "FLOWER PINK",
+      "module": "Describing surrounding things (Based on colours, shapes and size)"
     },
     {
       "id": 11,
-      "english": "I want to come home"
+      "english": "My phone is black.",
+      "gloss": "MY PHONE BLACK",
+      "module": "Describing surrounding things (Based on colours, shapes and size)"
     },
     {
       "id": 12,
-      "english": "I am going home"
+      "english": "The elephant is big.",
+      "gloss": "ELEPHANT BIG",
+      "module": "Describing surrounding things (Based on colours, shapes and size)"
     },
     {
       "id": 13,
-      "english": "I want to go home"
+      "english": "The cat is small.",
+      "gloss": "CAT SMALL",
+      "module": "Describing surrounding things (Based on colours, shapes and size)"
     },
     {
       "id": 14,
-      "english": "I am happy to see you"
+      "english": "The tree is tall.",
+      "gloss": "TREE TALL",
+      "module": "Describing surrounding things (Based on colours, shapes and size)"
     },
     {
       "id": 15,
-      "english": "I want to see you"
+      "english": "The sun is bright today.",
+      "gloss": "SUN BRIGHT TODAY",
+      "module": "Describing surrounding things (Based on colours, shapes and size)"
     },
     {
       "id": 16,
-      "english": "I want to go to the office"
+      "english": "Who is your teacher?",
+      "gloss": "YOUR TEACHER WHO",
+      "module": "Basic grammatical structure in ISL Part-I"
     },
     {
       "id": 17,
-      "english": "I want to go to school"
+      "english": "When does the class start?",
+      "gloss": "CLASS START WHEN",
+      "module": "Basic grammatical structure in ISL Part-I"
     },
     {
       "id": 18,
-      "english": "He is coming home now"
+      "english": "Where do you live?",
+      "gloss": "YOU LIVE WHERE",
+      "module": "Basic grammatical structure in ISL Part-I"
     },
     {
       "id": 19,
-      "english": "He sees me now"
+      "english": "Why are you angry?",
+      "gloss": "YOU ANGRY WHY",
+      "module": "Basic grammatical structure in ISL Part-I"
     },
     {
       "id": 20,
-      "english": "He wants to eat now"
+      "english": "Do you have a pen?",
+      "gloss": "YOU PEN HAVE",
+      "module": "Basic grammatical structure in ISL Part-I"
     },
     {
       "id": 21,
-      "english": "He is going to the office now"
+      "english": "I do not like coffee.",
+      "gloss": "I COFFEE LIKE NO",
+      "module": "Basic grammatical structure in ISL Part-I"
     },
     {
       "id": 22,
-      "english": "He is going to school now"
+      "english": "I am not tired.",
+      "gloss": "I TIRED NO",
+      "module": "Basic grammatical structure in ISL Part-I"
     },
     {
       "id": 23,
-      "english": "Come home now"
+      "english": "My mother is a doctor.",
+      "gloss": "MY MOTHER DOCTOR",
+      "module": "Most commonly used words in ISL Part-II"
     },
     {
       "id": 24,
-      "english": "I see you now"
+      "english": "My father is a farmer.",
+      "gloss": "MY FATHER FARMER",
+      "module": "Most commonly used words in ISL Part-II"
     },
     {
       "id": 25,
-      "english": "I want to eat now"
+      "english": "My friend is a teacher.",
+      "gloss": "MY FRIEND TEACHER",
+      "module": "Most commonly used words in ISL Part-II"
     },
     {
       "id": 26,
-      "english": "I am going to the office now"
+      "english": "We eat rice.",
+      "gloss": "WE RICE EAT",
+      "module": "Most commonly used words in ISL Part-II"
     },
     {
       "id": 27,
-      "english": "I am going to school now"
+      "english": "I am hungry.",
+      "gloss": "I HUNGRY",
+      "module": "Most commonly used words in ISL Part-II"
     },
     {
       "id": 28,
-      "english": "You are happy now"
+      "english": "My house is near the school.",
+      "gloss": "MY HOME SCHOOL NEAR",
+      "module": "Most commonly used words in ISL Part-II"
     },
     {
       "id": 29,
-      "english": "You want to eat now"
+      "english": "Where is the bank?",
+      "gloss": "BANK WHERE",
+      "module": "Need based vocabulary Part-I"
     },
     {
       "id": 30,
-      "english": "Thank you, he is happy"
+      "english": "I want to open a bank account.",
+      "gloss": "I WANT BANK ACCOUNTS OPEN",
+      "module": "Need based vocabulary Part-I"
     },
     {
       "id": 31,
-      "english": "Thank you, I am happy"
+      "english": "Please send me an email.",
+      "gloss": "PLEASE I EMAIL SEND",
+      "module": "Need based vocabulary Part-I"
     },
     {
       "id": 32,
-      "english": "You want to go home"
+      "english": "The office is closed today.",
+      "gloss": "OFFICE CLOSE TODAY",
+      "module": "Need based vocabulary Part-I"
     },
     {
       "id": 33,
-      "english": "You want to see me"
+      "english": "Where is the hospital?",
+      "gloss": "HOSPITAL WHERE",
+      "module": "Need based vocabulary Part-II"
     },
     {
       "id": 34,
-      "english": "You are coming to the office"
+      "english": "I am sick, please call the doctor.",
+      "gloss": "I SICK PLEASE DOCTOR CALL",
+      "module": "Need based vocabulary Part-II"
     },
     {
       "id": 35,
-      "english": "You are going to school"
+      "english": "Where is the bus stop?",
+      "gloss": "BUS STOP WHERE",
+      "module": "Need based vocabulary Part-III"
     },
     {
       "id": 36,
-      "english": "Hello, I want to say thank you"
+      "english": "The train is late.",
+      "gloss": "TRAIN LATE",
+      "module": "Need based vocabulary Part-III"
     },
     {
       "id": 37,
-      "english": "[Benchmark] 2 glosses"
+      "english": "Is the shop open?",
+      "gloss": "SHOP OPEN",
+      "module": "Need based vocabulary Part-III"
     },
     {
       "id": 38,
-      "english": "[Benchmark] 5 glosses"
+      "english": "Yesterday I visited the market.",
+      "gloss": "YESTERDAY I MARKET VISIT",
+      "module": "Need based vocabulary Part-III"
     },
     {
       "id": 39,
-      "english": "[Benchmark] 10 glosses"
+      "english": "Can you help me, please?",
+      "gloss": "YOU I CAN HELP PLEASE",
+      "module": "Situation based conversation in ISL"
     },
     {
       "id": 40,
-      "english": "[Benchmark] 20 glosses"
+      "english": "Please wait.",
+      "gloss": "PLEASE WAIT",
+      "module": "Situation based conversation in ISL"
+    },
+    {
+      "id": 41,
+      "english": "I am late today.",
+      "gloss": "I LATE TODAY",
+      "module": "Situation based conversation in ISL"
+    },
+    {
+      "id": 42,
+      "english": "Please call me tomorrow.",
+      "gloss": "PLEASE I CALL TOMORROW",
+      "module": "Situation based conversation in ISL"
+    },
+    {
+      "id": 43,
+      "english": "I lost my phone.",
+      "gloss": "I MY PHONE LOSE",
+      "module": "Situation based conversation in ISL"
+    },
+    {
+      "id": 44,
+      "english": "The library is near the college.",
+      "gloss": "LIBRARY COLLEGE NEAR",
+      "module": "Situation based conversation in ISL"
+    },
+    {
+      "id": 45,
+      "english": "I want to learn sign language.",
+      "gloss": "I WANT S-I-G-N LANGUAGE LEARN",
+      "module": "Situation based conversation in ISL"
     }
   ]
 }
